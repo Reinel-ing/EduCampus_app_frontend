@@ -2,12 +2,17 @@
 import '../../core/theme/colores_app.dart';
 import '../../models/alerta_alumno.dart';
 import '../../models/clase_finalizada.dart';
+import '../../models/notificacion.dart';
 import '../../services/servicio_estudiantes.dart';
 import '../../services/servicio_docentes.dart';
 import '../../services/servicio_alertas.dart';
 import '../../services/servicio_clases.dart';
 import '../../services/servicio_acudientes.dart';
 import '../../services/servicio_grados.dart';
+import '../comunicacion/pantalla_notificaciones.dart';
+import 'pantalla_alertas_alumnos.dart';
+import 'pantalla_gestion_acudientes.dart';
+import 'pantalla_gestion_docentes.dart';
 
 class AdminHomeContent extends StatelessWidget {
   const AdminHomeContent({super.key});
@@ -200,25 +205,41 @@ class AdminHomeContent extends StatelessWidget {
                     icon: Icons.person_add_rounded,
                     label: 'Registrar docente',
                     color: Colors.blue.shade600,
-                    onTap: () {},
+                    onTap: () => _abrirPantalla(
+                      context,
+                      titulo: 'Docentes',
+                      child: const GestionDocentesScreen(),
+                    ),
                   ),
                   _AdminQuickButton(
                     icon: Icons.group_add_rounded,
                     label: 'Registrar acudiente',
                     color: Colors.pink.shade400,
-                    onTap: () {},
+                    onTap: () => _abrirPantalla(
+                      context,
+                      titulo: 'Acudientes',
+                      child: const GestionAcudientesScreen(),
+                    ),
                   ),
                   _AdminQuickButton(
                     icon: Icons.warning_amber_rounded,
                     label: 'Ver alertas',
                     color: AppColors.danger,
-                    onTap: () {},
+                    onTap: () => _abrirPantalla(
+                      context,
+                      titulo: 'Alertas de alumnos',
+                      child: const AlertasAlumnosScreen(),
+                    ),
                   ),
                   _AdminQuickButton(
                     icon: Icons.campaign_rounded,
                     label: 'Enviar comunicado',
                     color: AppColors.accent,
-                    onTap: () {},
+                    onTap: () => _abrirPantalla(
+                      context,
+                      titulo: 'Comunicación',
+                      child: const NotificacionesScreen(rol: RolNotificacion.admin),
+                    ),
                   ),
                 ],
               ),
@@ -228,6 +249,26 @@ class AdminHomeContent extends StatelessWidget {
       },
     );
   }
+}
+
+void _abrirPantalla(
+  BuildContext context, {
+  required String titulo,
+  required Widget child,
+}) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => Scaffold(
+        appBar: AppBar(
+          title: Text(titulo),
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+        ),
+        body: child,
+      ),
+    ),
+  );
 }
 
 class _AdminSectionHeader extends StatelessWidget {
