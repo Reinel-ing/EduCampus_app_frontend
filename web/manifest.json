@@ -1,0 +1,23 @@
+{
+    "name": "EduCampus - COLMAS",
+    "short_name": "EduCampus",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#2E5EAA",
+    "theme_color": "#2E5EAA",
+    "description": "Sistema de Gestión Educativa del Colegio Manantial de Sabiduría.",
+    "orientation": "any",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
