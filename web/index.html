@@ -27,7 +27,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="EduCampus">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
@@ -89,6 +89,27 @@
       var loader = document.getElementById('loader-inicial');
       if (loader) loader.remove();
     });
+
+    window.eduCampusInstallPrompt = null;
+
+    window.addEventListener('beforeinstallprompt', function (event) {
+      event.preventDefault();
+      window.eduCampusInstallPrompt = event;
+    });
+
+    window.eduCampusPuedeInstalar = function () {
+      return window.eduCampusInstallPrompt !== null;
+    };
+
+    window.eduCampusInstalarApp = function () {
+      if (!window.eduCampusInstallPrompt) return Promise.resolve('unavailable');
+      var evento = window.eduCampusInstallPrompt;
+      window.eduCampusInstallPrompt = null;
+      evento.prompt();
+      return evento.userChoice.then(function (result) {
+        return result.outcome;
+      });
+    };
   </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
