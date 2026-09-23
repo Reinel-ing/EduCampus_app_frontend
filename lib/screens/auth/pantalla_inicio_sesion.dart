@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import '../../core/theme/colores_app.dart';
 import '../../widgets/campo_texto_etiquetado.dart';
 import '../../services/servicio_acudientes.dart';
 import '../../services/servicio_auth.dart';
+import '../../services/servicio_instalacion.dart';
 import '../admin/panel_admin.dart';
 import '../docente/panel_docente.dart';
 import '../acudiente/panel_acudiente.dart';
@@ -101,6 +103,65 @@ class _LoginScreenState extends State<LoginScreen> {
         _errorMensaje = 'Ocurrió un error inesperado. Intenta de nuevo.';
       });
     }
+  }
+
+  bool get _mostrarBotonDescargar =>
+      kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS);
+
+  void _descargarApp() async {
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      _mostrarInstruccionesIOS();
+      return;
+    }
+
+    final resultado = await InstalacionService().instalar();
+
+    if (!mounted) return;
+
+    if (resultado == 'accepted') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('¡Listo! EduCampus se está instalando.')),
+      );
+    } else if (resultado != 'dismissed') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Ya está instalada, o tu navegador no lo permite aquí. '
+            'Busca "Instalar app" en el menú del navegador.',
+          ),
+        ),
+      );
+    }
+  }
+
+  void _mostrarInstruccionesIOS() {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Instalar EduCampus'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('En iPhone la instalación se hace desde Safari:'),
+            SizedBox(height: 12),
+            Text('1. Toca el botón Compartir (el cuadro con la flecha hacia arriba).'),
+            SizedBox(height: 6),
+            Text('2. Baja y selecciona "Agregar a pantalla de inicio".'),
+            SizedBox(height: 6),
+            Text('3. Confirma. El ícono de EduCampus quedará en tu pantalla de inicio.'),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -374,6 +435,31 @@ class _LoginScreenState extends State<LoginScreen> {
                         fontSize: 13)),
               ),
             ),
+            if (_mostrarBotonDescargar) ...[
+              const SizedBox(height: 8),
+              const Divider(),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                height: 46,
+                child: OutlinedButton.icon(
+                  onPressed: _descargarApp,
+                  icon: Image.asset(
+                    'assets/images/logo_colmas.jpg',
+                    width: 20,
+                    height: 20,
+                    fit: BoxFit.contain,
+                  ),
+                  label: const Text('Descargar app'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    side: const BorderSide(color: AppColors.primary),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
