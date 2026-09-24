@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import '../models/clase_finalizada.dart';
 import 'api_config.dart';
+import 'utilidad_fechas.dart';
 
 class ClasesService extends ChangeNotifier {
   static final ClasesService _instance = ClasesService._internal();
@@ -49,7 +50,7 @@ class ClasesService extends ChangeNotifier {
                 materia: c['materia'] as String,
                 grado: c['grado'] as String,
                 observacion: c['observacion'] as String? ?? '',
-                fechaHora: DateTime.parse(c['fecha_hora'] as String),
+                fechaHora: parsearFechaHoraUtc(c['fecha_hora'] as String),
               )));
       }
     } catch (_) {

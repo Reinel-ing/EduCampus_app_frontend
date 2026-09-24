@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import '../models/actividad.dart';
 import 'api_config.dart';
+import 'utilidad_fechas.dart';
 
 class ActividadesService extends ChangeNotifier {
   static final ActividadesService _instance = ActividadesService._internal();
@@ -29,8 +30,10 @@ class ActividadesService extends ChangeNotifier {
       cursoId: t['curso_id'] as int,
       titulo: t['titulo'] as String,
       descripcion: t['descripcion'] as String? ?? '',
+      // fecha_entrega la escribe el docente en su hora local y se lee tal cual
+      // (no es un valor generado por el servidor, no hay que reinterpretarlo).
       fechaEntrega: DateTime.parse(t['fecha_entrega'] as String),
-      fechaCreacion: DateTime.parse(t['fecha_creacion'] as String),
+      fechaCreacion: parsearFechaHoraUtc(t['fecha_creacion'] as String),
       permiteVideo: t['permite_video'] as bool? ?? false,
     );
   }
@@ -43,7 +46,7 @@ class ActividadesService extends ChangeNotifier {
       archivoTipo: e['archivo_tipo'] as String,
       nombreOriginal: e['nombre_original'] as String,
       comentario: e['comentario'] as String? ?? '',
-      fechaEntrega: DateTime.parse(e['fecha_entrega'] as String),
+      fechaEntrega: parsearFechaHoraUtc(e['fecha_entrega'] as String),
       nota: (e['nota'] as num?)?.toDouble(),
       retroalimentacion: e['retroalimentacion'] as String?,
     );
