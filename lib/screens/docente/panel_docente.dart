@@ -7,7 +7,7 @@ import '../evaluacion/pantalla_evaluacion_docente.dart';
 import '../actividades/pantalla_actividades_docente.dart';
 import '../convivencia/pantalla_convivencia_docente.dart';
 import '../horario/horario_docente_screen.dart';
-import '../asistencia/pantalla_asistencia.dart';
+import '../asistencia/pantalla_asistencia_docente.dart';
 import '../materiales/pantalla_materiales.dart';
 import '../calendario/pantalla_calendario.dart';
 import 'contenido_inicio_docente.dart';
@@ -41,7 +41,7 @@ class DocenteDashboard extends StatelessWidget {
         NavSection(
           title: 'Académico',
           items: [
-            NavItem(label: 'Asistencia', icon: Icons.event_available_rounded, screenBuilder: (_) => const AsistenciaScreen()),
+            NavItem(label: 'Asistencia', icon: Icons.event_available_rounded, screenBuilder: (_) => const AsistenciaDocenteScreen()),
             NavItem(label: 'Calificaciones y logros', icon: Icons.grade_rounded, screenBuilder: (_) => const EvaluacionDocenteScreen()),
             NavItem(label: 'Material Didáctico', icon: Icons.folder_rounded, screenBuilder: (_) => const MaterialesScreen()),
             NavItem(label: 'Actividades', icon: Icons.assignment_rounded, screenBuilder: (_) => const ActividadesDocenteScreen()),

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import '../../core/theme/colores_app.dart';
-import '../../models/asistencia.dart';
-import '../../services/servicio_asistencia.dart';
-import '../../services/servicio_estudiantes.dart';
+import '../../services/servicio_asistencia_backend.dart';
+import '../../services/servicio_docentes.dart';
 
 class AsistenciaScreen extends StatefulWidget {
   const AsistenciaScreen({super.key});
@@ -13,6 +14,15 @@ class AsistenciaScreen extends StatefulWidget {
 
 class _AsistenciaScreenState extends State<AsistenciaScreen> {
   DateTime _fecha = DateTime.now();
+  Map<int, AsistenciaDocenteBackend> _registros = {};
+  bool _cargando = true;
+
+  @override
+  void initState() {
+    super.initState();
+    TeacherService().cargarDesdeBackend();
+    _cargarAsistencias();
+  }
 
   String _formatearFecha(DateTime f) {
     const meses = [
@@ -22,30 +32,52 @@ class _AsistenciaScreenState extends State<AsistenciaScreen> {
     return '${f.day} de ${meses[f.month - 1]} de ${f.year}';
   }
 
-  Color _colorEstado(EstadoAsistencia? estado) {
-    switch (estado) {
-      case EstadoAsistencia.presente:
-        return AppColors.success;
-      case EstadoAsistencia.tarde:
-        return AppColors.accent;
-      case EstadoAsistencia.ausente:
-        return AppColors.danger;
-      case EstadoAsistencia.excusa:
-        return AppColors.textSecondary;
-      case null:
-        return const Color(0xFFB0B0B8);
-    }
+  Future<void> _cargarAsistencias() async {
+    setState(() => _cargando = true);
+    final lista = await AsistenciaBackendService().listarDocentes(_fecha);
+    if (!mounted) return;
+    setState(() {
+      _registros = {for (final r in lista) r.profesorId: r};
+      _cargando = false;
+    });
+  }
+
+  Future<void> _marcar(int profesorId, {bool? presente, bool? completo}) async {
+    final actual = _registros[profesorId];
+    final nuevoPresente = presente ?? actual?.presente ?? true;
+    final nuevoCompleto = completo ?? actual?.completo ?? true;
+
+    setState(() {
+      _registros[profesorId] = AsistenciaDocenteBackend(
+        profesorId: profesorId,
+        fecha: formatearFechaISO(_fecha),
+        presente: nuevoPresente,
+        completo: nuevoCompleto,
+      );
+    });
+
+    await AsistenciaBackendService().marcarDocente(
+      profesorId: profesorId,
+      fecha: _fecha,
+      presente: nuevoPresente,
+      completo: nuevoCompleto,
+    );
+  }
+
+  Future<void> _descargarReporte() async {
+    final url = AsistenciaBackendService().urlReporteDiario(_fecha);
+    final uri = Uri.parse(url);
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
   @override
   Widget build(BuildContext context) {
-    final estudiantesService = StudentService();
-    final asistenciaService = AsistenciaService();
+    final teacherService = TeacherService();
 
     return ListenableBuilder(
-      listenable: Listenable.merge([estudiantesService, asistenciaService]),
+      listenable: teacherService,
       builder: (context, _) {
-        final estudiantes = estudiantesService.students;
+        final docentes = teacherService.teachers;
 
         return Column(
           children: [
@@ -53,97 +85,129 @@ class _AsistenciaScreenState extends State<AsistenciaScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               color: Colors.white,
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.chevron_left_rounded),
-                    onPressed: () => setState(() => _fecha = _fecha.subtract(const Duration(days: 1))),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.chevron_left_rounded),
+                        onPressed: () {
+                          setState(() => _fecha = _fecha.subtract(const Duration(days: 1)));
+                          _cargarAsistencias();
+                        },
+                      ),
+                      Text(_formatearFecha(_fecha), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                      IconButton(
+                        icon: const Icon(Icons.chevron_right_rounded),
+                        onPressed: () {
+                          setState(() => _fecha = _fecha.add(const Duration(days: 1)));
+                          _cargarAsistencias();
+                        },
+                      ),
+                    ],
                   ),
-                  Text(_formatearFecha(_fecha), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                  IconButton(
-                    icon: const Icon(Icons.chevron_right_rounded),
-                    onPressed: () => setState(() => _fecha = _fecha.add(const Duration(days: 1))),
+                  OutlinedButton.icon(
+                    onPressed: _descargarReporte,
+                    icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
+                    label: const Text('Reporte del día'),
                   ),
                 ],
               ),
             ),
             Expanded(
-              child: estudiantes.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'Aún no hay estudiantes registrados',
-                        style: TextStyle(color: AppColors.textSecondary),
-                      ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 30),
-                      itemCount: estudiantes.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 10),
-                      itemBuilder: (context, index) {
-                        final s = estudiantes[index];
-                        final estado = asistenciaService.estadoDe(s.id, _fecha);
+              child: _cargando
+                  ? const Center(child: CircularProgressIndicator())
+                  : docentes.isEmpty
+                      ? const Center(
+                          child: Text('Aún no hay docentes registrados',
+                              style: TextStyle(color: AppColors.textSecondary)),
+                        )
+                      : ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 30),
+                          itemCount: docentes.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: 10),
+                          itemBuilder: (context, index) {
+                            final d = docentes[index];
+                            final id = int.tryParse(d.id);
+                            final registro = id != null ? _registros[id] : null;
 
-                        return Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE7E7EC)),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
+                            return Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: const Color(0xFFE7E7EC)),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  CircleAvatar(
-                                    backgroundColor: AppColors.primary.withOpacity(0.1),
-                                    child: Text(
-                                      s.nombres.isNotEmpty ? s.nombres[0].toUpperCase() : '?',
-                                      style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
-                                    ),
+                                  Row(
+                                    children: [
+                                      CircleAvatar(
+                                        backgroundColor: Colors.blue.shade50,
+                                        child: Text(
+                                          d.nombres.isNotEmpty ? d.nombres[0].toUpperCase() : '?',
+                                          style: TextStyle(color: Colors.blue.shade700, fontWeight: FontWeight.bold),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(d.nombreCompleto, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                            Text(d.especialidad,
+                                                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
+                                          ],
+                                        ),
+                                      ),
+                                      Container(
+                                        width: 10,
+                                        height: 10,
+                                        decoration: BoxDecoration(
+                                          color: registro == null
+                                              ? const Color(0xFFB0B0B8)
+                                              : (registro.presente ? AppColors.success : AppColors.danger),
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                  const SizedBox(height: 10),
+                                  if (id != null) ...[
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
                                       children: [
-                                        Text(s.nombreCompleto, style: const TextStyle(fontWeight: FontWeight.w600)),
-                                        Text(s.grado, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
+                                        ChoiceChip(
+                                          label: const Text('Presente'),
+                                          selected: registro?.presente == true,
+                                          selectedColor: AppColors.success.withValues(alpha: 0.15),
+                                          onSelected: (_) => _marcar(id, presente: true),
+                                        ),
+                                        ChoiceChip(
+                                          label: const Text('Ausente'),
+                                          selected: registro?.presente == false,
+                                          selectedColor: AppColors.danger.withValues(alpha: 0.15),
+                                          onSelected: (_) => _marcar(id, presente: false),
+                                        ),
+                                        if (registro?.presente ?? true) ...[
+                                          const SizedBox(width: 12),
+                                          FilterChip(
+                                            label: const Text('Cumplió todo'),
+                                            selected: registro?.completo ?? true,
+                                            selectedColor: AppColors.primary.withValues(alpha: 0.15),
+                                            onSelected: (v) => _marcar(id, presente: true, completo: v),
+                                          ),
+                                        ],
                                       ],
                                     ),
-                                  ),
-                                  Container(
-                                    width: 10,
-                                    height: 10,
-                                    decoration: BoxDecoration(color: _colorEstado(estado), shape: BoxShape.circle),
-                                  ),
+                                  ],
                                 ],
                               ),
-                              const SizedBox(height: 10),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: EstadoAsistencia.values.map((e) {
-                                  final seleccionado = estado == e;
-                                  return ChoiceChip(
-                                    label: Text(e.etiqueta),
-                                    selected: seleccionado,
-                                    selectedColor: _colorEstado(e).withOpacity(0.15),
-                                    labelStyle: TextStyle(
-                                      color: seleccionado ? _colorEstado(e) : AppColors.textPrimary,
-                                      fontWeight: seleccionado ? FontWeight.w600 : FontWeight.normal,
-                                    ),
-                                    onSelected: (_) {
-                                      asistenciaService.marcar(estudianteId: s.id, fecha: _fecha, estado: e);
-                                    },
-                                  );
-                                }).toList(),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+                            );
+                          },
+                        ),
             ),
           ],
         );
