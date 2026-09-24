@@ -6,6 +6,7 @@ import 'package:pdf/widgets.dart' as pw;
 import '../../core/theme/colores_app.dart';
 import '../../models/estudiante.dart';
 import '../../models/registro_academico.dart';
+import '../../services/servicio_auth.dart';
 import '../../services/servicio_estudiantes.dart';
 import '../../services/servicio_evaluacion.dart';
 import '../../widgets/campo_texto_etiquetado.dart';
@@ -298,11 +299,23 @@ class EvaluacionDocenteScreen extends StatelessWidget {
     return ListenableBuilder(
       listenable: Listenable.merge([estSvc, evalSvc]),
       builder: (context, _) {
-        final estudiantes = estSvc.students;
+        final sesion = AuthService().sesionActual;
+        final esAcudiente = sesion?.rol == 'acudiente';
+
+        final estudiantes = esAcudiente
+            ? estSvc.students
+                .where((s) => s.acudienteCorreo.trim().toLowerCase() == sesion?.correo)
+                .toList()
+            : estSvc.students;
+
         if (estudiantes.isEmpty) {
-          return const Center(
-            child: Text('Aún no hay estudiantes registrados',
-                style: TextStyle(color: AppColors.textSecondary)),
+          return Center(
+            child: Text(
+              esAcudiente
+                  ? 'No se encontró un estudiante vinculado a tu cuenta.'
+                  : 'Aún no hay estudiantes registrados',
+              style: const TextStyle(color: AppColors.textSecondary),
+            ),
           );
         }
 
