@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import '../models/material_didactico.dart';
 import 'api_config.dart';
+import 'utilidad_fechas.dart';
 
 class MaterialService extends ChangeNotifier {
   static final MaterialService _instance = MaterialService._internal();
@@ -31,7 +32,7 @@ class MaterialService extends ChangeNotifier {
       descripcion: d['descripcion'] as String? ?? '',
       materia: d['materia'] as String? ?? '',
       enlace: d['enlace'] as String? ?? '',
-      fecha: DateTime.parse(d['fecha_creacion'] as String),
+      fecha: parsearFechaHoraUtc(d['fecha_creacion'] as String),
       archivoNombre: d['archivo_nombre'] as String? ?? '',
       archivoBytes: archivoBase64 != null && archivoBase64.isNotEmpty
           ? base64Decode(archivoBase64)

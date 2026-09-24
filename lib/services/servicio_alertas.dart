@@ -7,6 +7,7 @@ import '../models/alerta_alumno.dart';
 import '../models/estudiante.dart';
 import 'api_config.dart';
 import 'servicio_estudiantes.dart';
+import 'utilidad_fechas.dart';
 
 class AlertasService extends ChangeNotifier {
   static final AlertasService _instance = AlertasService._internal();
@@ -55,7 +56,7 @@ class AlertasService extends ChangeNotifier {
       docenteNombre: json['docente_nombre'] as String? ?? 'Docente',
       descripcion: json['mensaje'] as String,
       nivel: _nivelDesde(json['severidad'] as String),
-      fecha: DateTime.parse(json['fecha'] as String),
+      fecha: parsearFechaHoraUtc(json['fecha'] as String),
       atendida: json['atendida'] as bool? ?? false,
       respuestaAdmin: json['respuesta_admin'] as String? ?? '',
     );

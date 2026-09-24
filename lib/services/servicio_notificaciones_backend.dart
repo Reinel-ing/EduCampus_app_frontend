@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import 'api_config.dart';
 import 'servicio_auth.dart';
+import 'utilidad_fechas.dart';
 
 class NotificacionBackend {
   final int id;
@@ -38,7 +39,7 @@ class NotificacionBackend {
       mensaje: json['mensaje'] as String,
       tipo: json['tipo'] as String,
       leida: json['leida'] as bool,
-      fecha: DateTime.parse(json['fecha'] as String),
+      fecha: parsearFechaHoraUtc(json['fecha'] as String),
     );
   }
 }
