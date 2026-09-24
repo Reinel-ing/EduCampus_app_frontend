@@ -288,8 +288,21 @@ Future<void> _generarBoletin(
 
 // ─── Pantalla principal ───────────────────────────────────────────────────────
 
-class EvaluacionDocenteScreen extends StatelessWidget {
+class EvaluacionDocenteScreen extends StatefulWidget {
   const EvaluacionDocenteScreen({super.key});
+
+  @override
+  State<EvaluacionDocenteScreen> createState() => _EvaluacionDocenteScreenState();
+}
+
+class _EvaluacionDocenteScreenState extends State<EvaluacionDocenteScreen> {
+  @override
+  void initState() {
+    super.initState();
+    if (StudentService().students.isEmpty) {
+      StudentService().cargarDesdeBackend();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -309,6 +322,9 @@ class EvaluacionDocenteScreen extends StatelessWidget {
             : estSvc.students;
 
         if (estudiantes.isEmpty) {
+          if (estSvc.cargando) {
+            return const Center(child: CircularProgressIndicator());
+          }
           return Center(
             child: Text(
               esAcudiente
@@ -471,6 +487,8 @@ class EvaluacionDocenteScreen extends StatelessWidget {
 class _EvaluacionEstudianteScreen extends StatelessWidget {
   final Student estudiante;
   const _EvaluacionEstudianteScreen({required this.estudiante});
+
+  bool get _esDocente => AuthService().sesionActual?.rol == 'profesor';
 
   void _abrirFormulario(BuildContext context) {
     showModalBottomSheet(
@@ -648,12 +666,13 @@ class _EvaluacionEstudianteScreen extends StatelessWidget {
                               ],
                             ),
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.delete_outline_rounded,
-                                size: 20, color: AppColors.danger),
-                            onPressed: () =>
-                                EvaluacionService().eliminar(r.id),
-                          ),
+                          if (_esDocente)
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline_rounded,
+                                  size: 20, color: AppColors.danger),
+                              onPressed: () =>
+                                  EvaluacionService().eliminar(r.id),
+                            ),
                         ],
                       ),
                     );
@@ -664,11 +683,13 @@ class _EvaluacionEstudianteScreen extends StatelessWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _abrirFormulario(context),
-        icon: const Icon(Icons.add),
-        label: const Text('Agregar registro'),
-      ),
+      floatingActionButton: _esDocente
+          ? FloatingActionButton.extended(
+              onPressed: () => _abrirFormulario(context),
+              icon: const Icon(Icons.add),
+              label: const Text('Agregar registro'),
+            )
+          : null,
     );
   }
 }
