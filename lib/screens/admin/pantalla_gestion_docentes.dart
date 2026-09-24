@@ -4,6 +4,7 @@ import '../../models/docente.dart';
 import '../../services/servicio_admin.dart';
 import '../../services/servicio_auth.dart';
 import '../../services/servicio_docentes.dart';
+import '../../widgets/contrasena_copiable.dart';
 
 class GestionDocentesScreen extends StatefulWidget {
   const GestionDocentesScreen({super.key});
@@ -66,7 +67,14 @@ class _GestionDocentesScreenState extends State<GestionDocentesScreen> {
                       ),
                     ),
                     title: Text(d.nombreCompleto, style: const TextStyle(fontWeight: FontWeight.w600)),
-                    subtitle: Text('${d.especialidad} · ${d.correo}'),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('${d.especialidad} · ${d.correo}'),
+                        ContrasenaEnLista(contrasena: d.contrasena),
+                      ],
+                    ),
                     trailing: const Icon(Icons.chevron_right_rounded),
                     onTap: () => _abrirFormulario(context, docente: d),
                   ),
@@ -199,12 +207,7 @@ class _FormularioDocenteState extends State<_FormularioDocente> {
               Text('Correo: ${cuenta.correo}'),
               const SizedBox(height: 8),
               const Text('Contraseña temporal:', style: TextStyle(fontWeight: FontWeight.bold)),
-              Container(
-                margin: const EdgeInsets.only(top: 6),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: const Color(0xFFF3F4F7), borderRadius: BorderRadius.circular(8)),
-                child: Text(contrasena, style: const TextStyle(fontFamily: 'monospace', fontSize: 18, fontWeight: FontWeight.bold)),
-              ),
+              ContrasenaCopiable(contrasena: contrasena),
             ],
           ),
           actions: [
@@ -245,6 +248,9 @@ class _FormularioDocenteState extends State<_FormularioDocente> {
         password: nuevaContrasena,
       );
 
+      docente.contrasena = nuevaContrasena;
+      TeacherService().updateTeacher(docente);
+
       if (!mounted) return;
       setState(() => _isLoading = false);
 
@@ -260,12 +266,7 @@ class _FormularioDocenteState extends State<_FormularioDocente> {
               Text('Correo: ${docente.correo}'),
               const SizedBox(height: 8),
               const Text('Nueva contraseña:', style: TextStyle(fontWeight: FontWeight.bold)),
-              Container(
-                margin: const EdgeInsets.only(top: 6),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: const Color(0xFFF3F4F7), borderRadius: BorderRadius.circular(8)),
-                child: Text(nuevaContrasena, style: const TextStyle(fontFamily: 'monospace', fontSize: 18, fontWeight: FontWeight.bold)),
-              ),
+              ContrasenaCopiable(contrasena: nuevaContrasena),
             ],
           ),
           actions: [
