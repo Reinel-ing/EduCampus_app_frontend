@@ -218,12 +218,13 @@ class _DetalleActividadAcudienteScreen extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final estudiante = estudiantes[index];
                     final entrega = ActividadesService().entregaDe(actividad.id, estudiante.id);
+                    final plazoVencido = DateTime.now().isAfter(actividad.fechaEntrega);
 
                     Color chipColor;
                     String etiqueta;
                     if (entrega == null) {
                       chipColor = AppColors.danger;
-                      etiqueta = 'Pendiente';
+                      etiqueta = plazoVencido ? 'Plazo vencido' : 'Pendiente';
                     } else if (entrega.calificada) {
                       chipColor = AppColors.success;
                       etiqueta = 'Calificada (${entrega.nota!.toStringAsFixed(1)})';
@@ -258,7 +259,7 @@ class _DetalleActividadAcudienteScreen extends StatelessWidget {
                                   ],
                                 ),
                               ),
-                              if (entrega == null)
+                              if (entrega == null && !plazoVencido)
                                 ElevatedButton.icon(
                                   onPressed: () => _abrirEntrega(context, estudiante),
                                   icon: const Icon(Icons.upload_rounded, size: 16),
