@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import '../../core/theme/colores_app.dart';
 import '../../services/api_config.dart';
 import '../../services/servicio_auth.dart';
+import '../../services/servicio_clases.dart';
 import '../../services/servicio_notificaciones_backend.dart';
 
 String _telefonoWhatsapp(String telefono) {
@@ -102,6 +103,8 @@ class _FinalizarClaseScreenState extends State<FinalizarClaseScreen> {
       if (resultado.whatsapp.isNotEmpty) {
         _abrirChatsWhatsapp(resultado.whatsapp);
       }
+
+      ClasesService().cargarDesdeBackend();
 
       setState(() {
         _enviando = false;

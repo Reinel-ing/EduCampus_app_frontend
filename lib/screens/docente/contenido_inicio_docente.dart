@@ -28,6 +28,10 @@ class DocenteHomeContent extends StatelessWidget {
     final materialService = MaterialService();
     final hoy = DateTime.now();
 
+    studentService.cargarDesdeBackendSiHaceFalta();
+    alertasService.cargarDesdeBackendSiHaceFalta();
+    clasesService.cargarDesdeBackendSiHaceFalta();
+
     return ListenableBuilder(
       listenable: Listenable.merge([studentService, alertasService, clasesService, materialService]),
       builder: (context, _) {

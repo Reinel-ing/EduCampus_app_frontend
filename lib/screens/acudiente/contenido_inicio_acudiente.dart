@@ -1,8 +1,8 @@
 ﻿import 'package:flutter/material.dart';
 import '../../core/theme/colores_app.dart';
 import '../../models/estudiante.dart';
-import '../../services/servicio_acudientes.dart';
 import '../../services/servicio_alertas.dart';
+import '../../services/servicio_auth.dart';
 import '../../services/servicio_estudiantes.dart';
 
 class AcudienteHomeContent extends StatelessWidget {
@@ -10,22 +10,25 @@ class AcudienteHomeContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final acuSvc = AcudientesService();
     final estSvc = StudentService();
     final alertaSvc = AlertasService();
 
-    return ListenableBuilder(
-      listenable: Listenable.merge([acuSvc, estSvc, alertaSvc]),
-      builder: (context, _) {
-        final cuenta = acuSvc.cuentaActual;
-        final todosLosEstudiantes = estSvc.students;
+    estSvc.cargarDesdeBackendSiHaceFalta();
+    alertaSvc.cargarDesdeBackendSiHaceFalta();
 
-        // Estudiantes vinculados a esta cuenta
-        final misEstudiantes = cuenta == null
+    return ListenableBuilder(
+      listenable: Listenable.merge([estSvc, alertaSvc]),
+      builder: (context, _) {
+        final sesion = AuthService().sesionActual;
+        final correo = sesion?.correo;
+
+        // Estudiantes vinculados a esta cuenta (por correo del acudiente)
+        final misEstudiantes = correo == null
             ? <Student>[]
-            : todosLosEstudiantes
-                .where((s) => cuenta.estudianteIds.contains(s.id))
+            : estSvc.students
+                .where((s) => s.acudienteCorreo.trim().toLowerCase() == correo)
                 .toList();
+        final tieneCuenta = correo != null;
 
         // Alertas de mis estudiantes
         final misAlertas = misEstudiantes.isEmpty
@@ -81,8 +84,8 @@ class AcudienteHomeContent extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            cuenta != null
-                                ? 'Bienvenido/a, ${cuenta.nombre}'
+                            sesion != null
+                                ? 'Bienvenido/a, ${sesion.nombre}'
                                 : 'Portal del Acudiente',
                             style: const TextStyle(
                                 color: Colors.white,
@@ -145,7 +148,7 @@ class AcudienteHomeContent extends StatelessWidget {
               if (misEstudiantes.isEmpty)
                 _EmptyCard(
                   icon: Icons.person_search_rounded,
-                  mensaje: cuenta == null
+                  mensaje: !tieneCuenta
                       ? 'No se encontró tu cuenta.\nContacta al administrador.'
                       : 'No tienes estudiantes vinculados aún.\nContacta al administrador para vincular a tu hijo/a.',
                 )

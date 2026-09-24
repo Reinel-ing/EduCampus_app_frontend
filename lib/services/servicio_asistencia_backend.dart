@@ -103,6 +103,22 @@ class AsistenciaBackendService {
         .toList();
   }
 
+  Future<List<AsistenciaEstudianteBackend>> listarPorFecha(DateTime fecha) async {
+    final uri = Uri.parse('${ApiConfig.baseUrl}/asistencias/').replace(
+      queryParameters: {'fecha': formatearFechaISO(fecha)},
+    );
+
+    final respuesta = await http.get(uri).timeout(const Duration(seconds: 45));
+
+    if (respuesta.statusCode != 200) return [];
+
+    final datos = jsonDecode(utf8.decode(respuesta.bodyBytes)) as List;
+
+    return datos
+        .map((d) => AsistenciaEstudianteBackend.fromJson(d as Map<String, dynamic>))
+        .toList();
+  }
+
   Future<List<AsistenciaEstudianteBackend>> listarPorEstudiante(int studentId) async {
     final uri = Uri.parse('${ApiConfig.baseUrl}/asistencias/').replace(
       queryParameters: {'student_id': studentId.toString()},

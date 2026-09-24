@@ -15,12 +15,19 @@ class StudentService extends ChangeNotifier {
   final List<Student> _students = [];
   final List<CustomField> _customFields = [];
   bool _cargando = false;
+  bool _intentoCarga = false;
 
   List<Student> get students => List.unmodifiable(_students);
   List<CustomField> get customFields => List.unmodifiable(_customFields);
   bool get cargando => _cargando;
 
+  Future<void> cargarDesdeBackendSiHaceFalta() async {
+    if (_intentoCarga) return;
+    await cargarDesdeBackend();
+  }
+
   Future<void> cargarDesdeBackend() async {
+    _intentoCarga = true;
     _cargando = true;
     notifyListeners();
 
