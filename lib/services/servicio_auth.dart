@@ -97,8 +97,50 @@ class AuthService extends ChangeNotifier {
     await prefs.remove('access_token');
     await prefs.remove('rol');
     await prefs.remove('nombre');
+    await prefs.remove('usuario_id');
+    await prefs.remove('correo');
 
     notifyListeners();
+  }
+
+  /// Intenta restaurar la sesión guardada localmente, validándola contra
+  /// el backend. Devuelve null si no hay sesión guardada o ya no es válida
+  /// (por ejemplo, si el backend se reinició y perdió la sesión en memoria).
+  Future<SesionUsuario?> restaurarSesion() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('access_token');
+
+    if (token == null || token.isEmpty) return null;
+
+    try {
+      final uri = Uri.parse('${ApiConfig.baseUrl}/auth/session/').replace(
+        queryParameters: {'access_token': token},
+      );
+
+      final respuesta = await http.get(uri).timeout(const Duration(seconds: 45));
+
+      if (respuesta.statusCode != 200) {
+        await cerrarSesion();
+        return null;
+      }
+
+      final datos = jsonDecode(utf8.decode(respuesta.bodyBytes));
+
+      final sesion = SesionUsuario(
+        accessToken: token,
+        rol: datos['rol'] as String,
+        nombre: datos['nombre'] as String,
+        usuarioId: datos['usuario_id'] as int,
+        correo: datos['correo'] as String,
+      );
+
+      _sesionActual = sesion;
+      notifyListeners();
+
+      return sesion;
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> _guardarSesion(SesionUsuario sesion) async {
@@ -106,5 +148,7 @@ class AuthService extends ChangeNotifier {
     await prefs.setString('access_token', sesion.accessToken);
     await prefs.setString('rol', sesion.rol);
     await prefs.setString('nombre', sesion.nombre);
+    await prefs.setInt('usuario_id', sesion.usuarioId);
+    await prefs.setString('correo', sesion.correo);
   }
 }
