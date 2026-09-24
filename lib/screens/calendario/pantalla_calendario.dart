@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/colores_app.dart';
 import '../../models/evento_calendario.dart';
+import '../../services/servicio_auth.dart';
 import '../../services/servicio_calendario.dart';
 import '../../widgets/campo_texto_etiquetado.dart';
 
@@ -8,8 +9,21 @@ String _formatearFecha(DateTime f) {
   return '${f.day.toString().padLeft(2, '0')}/${f.month.toString().padLeft(2, '0')}/${f.year}';
 }
 
-class CalendarioScreen extends StatelessWidget {
+class CalendarioScreen extends StatefulWidget {
   const CalendarioScreen({super.key});
+
+  @override
+  State<CalendarioScreen> createState() => _CalendarioScreenState();
+}
+
+class _CalendarioScreenState extends State<CalendarioScreen> {
+  bool get _esAdmin => AuthService().sesionActual?.rol == 'administrador';
+
+  @override
+  void initState() {
+    super.initState();
+    CalendarioService().cargarDesdeBackend();
+  }
 
   void _abrirFormulario(BuildContext context) {
     showModalBottomSheet(
@@ -36,7 +50,10 @@ class CalendarioScreen extends StatelessWidget {
       ),
     );
     if (confirmado == true) {
-      CalendarioService().eliminar(evento.id);
+      final error = await CalendarioService().eliminar(evento.id);
+      if (error != null && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      }
     }
   }
 
@@ -52,10 +69,10 @@ class CalendarioScreen extends StatelessWidget {
             final eventos = service.eventos;
 
             if (eventos.isEmpty) {
-              return const Center(
+              return Center(
                 child: Text(
-                  'Aún no hay eventos programados',
-                  style: TextStyle(color: AppColors.textSecondary),
+                  service.cargando ? 'Cargando eventos...' : 'Aún no hay eventos programados',
+                  style: const TextStyle(color: AppColors.textSecondary),
                 ),
               );
             }
@@ -101,10 +118,11 @@ class CalendarioScreen extends StatelessWidget {
                           ],
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.delete_outline_rounded, color: AppColors.danger),
-                        onPressed: () => _confirmarEliminar(context, e),
-                      ),
+                      if (_esAdmin)
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline_rounded, color: AppColors.danger),
+                          onPressed: () => _confirmarEliminar(context, e),
+                        ),
                     ],
                   ),
                 );
@@ -112,15 +130,16 @@ class CalendarioScreen extends StatelessWidget {
             );
           },
         ),
-        Positioned(
-          right: 20,
-          bottom: 20,
-          child: FloatingActionButton.extended(
-            onPressed: () => _abrirFormulario(context),
-            icon: const Icon(Icons.add),
-            label: const Text('Nuevo evento'),
+        if (_esAdmin)
+          Positioned(
+            right: 20,
+            bottom: 20,
+            child: FloatingActionButton.extended(
+              onPressed: () => _abrirFormulario(context),
+              icon: const Icon(Icons.add),
+              label: const Text('Nuevo evento'),
+            ),
           ),
-        ),
       ],
     );
   }
@@ -138,6 +157,7 @@ class _FormularioEventoState extends State<_FormularioEvento> {
   final _tituloController = TextEditingController();
   final _descripcionController = TextEditingController();
   DateTime _fecha = DateTime.now();
+  bool _guardando = false;
 
   @override
   void dispose() {
@@ -156,15 +176,24 @@ class _FormularioEventoState extends State<_FormularioEvento> {
     if (fecha != null) setState(() => _fecha = fecha);
   }
 
-  void _guardar() {
+  Future<void> _guardar() async {
     if (!_formKey.currentState!.validate()) return;
 
-    CalendarioService().agregar(EventoCalendario(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+    setState(() => _guardando = true);
+
+    final error = await CalendarioService().agregar(
       titulo: _tituloController.text.trim(),
       descripcion: _descripcionController.text.trim(),
       fecha: _fecha,
-    ));
+    );
+
+    if (!mounted) return;
+
+    if (error != null) {
+      setState(() => _guardando = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      return;
+    }
 
     Navigator.of(context).pop();
   }
@@ -229,14 +258,20 @@ class _FormularioEventoState extends State<_FormularioEvento> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _guardar,
+                    onPressed: _guardando ? null : _guardar,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
-                    child: const Text('Guardar evento'),
+                    child: _guardando
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Text('Guardar evento'),
                   ),
                 ),
               ],
