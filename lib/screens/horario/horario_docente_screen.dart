@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/colores_app.dart';
 import '../../services/academic_service.dart';
+import '../../services/servicio_auth.dart';
 import '../../widgets/weekly_schedule_grid.dart';
 
 class HorarioDocenteScreen extends StatefulWidget {
@@ -11,12 +12,23 @@ class HorarioDocenteScreen extends StatefulWidget {
 }
 
 class _HorarioDocenteScreenState extends State<HorarioDocenteScreen> {
-  final _nombreCtrl = TextEditingController();
-  String? _docenteActivo;
+  bool _cargando = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargar();
+  }
+
+  Future<void> _cargar() async {
+    await AcademicService().cargarDesdeBackend();
+    if (mounted) setState(() => _cargando = false);
+  }
 
   @override
   Widget build(BuildContext context) {
     final service = AcademicService();
+    final instructorId = AuthService().sesionActual?.usuarioId;
 
     return ListenableBuilder(
       listenable: service,
@@ -26,28 +38,15 @@ class _HorarioDocenteScreenState extends State<HorarioDocenteScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Mi horario semanal', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.textPrimary)),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _nombreCtrl,
-                      decoration: const InputDecoration(labelText: 'Tu nombre (como docente registrado)', isDense: true),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  ElevatedButton(
-                    onPressed: () => setState(() => _docenteActivo = _nombreCtrl.text.trim()),
-                    child: const Text('Ver horario'),
-                  ),
-                ],
-              ),
+              const Text('Mi horario semanal',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.textPrimary)),
               const SizedBox(height: 20),
               Expanded(
-                child: _docenteActivo == null || _docenteActivo!.isEmpty
-                    ? const Center(child: Text('Escribe tu nombre para ver tu horario', style: TextStyle(color: AppColors.textSecondary)))
-                    : WeeklyScheduleGrid(entries: service.horarioPorDocente(_docenteActivo!)),
+                child: _cargando
+                    ? const Center(child: CircularProgressIndicator())
+                    : instructorId == null
+                        ? const Center(child: Text('No se pudo identificar tu sesión.', style: TextStyle(color: AppColors.textSecondary)))
+                        : WeeklyScheduleGrid(entries: service.horarioPorInstructorId(instructorId)),
               ),
             ],
           ),

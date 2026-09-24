@@ -1,12 +1,22 @@
 // ignore_for_file: avoid_web_libraries_in_flutter
+import 'dart:convert';
 import 'dart:html' as html;
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import '../../core/theme/colores_app.dart';
 import '../../models/material_didactico.dart';
-import '../../services/servicio_grados.dart';
+import '../../services/api_config.dart';
+import '../../services/servicio_auth.dart';
+import '../../services/servicio_estudiantes.dart';
 import '../../services/servicio_materiales.dart';
 import '../../widgets/campo_texto_etiquetado.dart';
+
+class _Curso {
+  final int id;
+  final String title;
+  const _Curso({required this.id, required this.title});
+}
 
 String _fmt(DateTime f) =>
     '${f.day.toString().padLeft(2, '0')}/${f.month.toString().padLeft(2, '0')}/${f.year}';
@@ -28,26 +38,75 @@ class MaterialesScreen extends StatefulWidget {
 }
 
 class _MaterialesScreenState extends State<MaterialesScreen> {
+  bool get _esDocente => AuthService().sesionActual?.rol == 'profesor';
+
+  bool _cargando = true;
+  List<_Curso> _cursos = [];
+  final Map<int, String> _tituloCurso = {};
+
   @override
   void initState() {
     super.initState();
-    if (GradoService().grados.isEmpty) {
-      GradoService().cargarDesdeBackend();
-    }
+    _cargarCursosYMateriales();
+  }
+
+  Future<void> _cargarCursosYMateriales() async {
+    setState(() => _cargando = true);
+
+    final sesion = AuthService().sesionActual;
+
+    try {
+      if (_esDocente) {
+        final uri = Uri.parse('${ApiConfig.baseUrl}/cursos/').replace(
+          queryParameters: {'instructor_id': sesion!.usuarioId.toString()},
+        );
+        final respuesta = await http.get(uri).timeout(const Duration(seconds: 45));
+        if (respuesta.statusCode == 200) {
+          final datos = jsonDecode(utf8.decode(respuesta.bodyBytes)) as List;
+          _cursos = datos.map((c) => _Curso(id: c['id'] as int, title: c['title'] as String)).toList();
+        }
+      } else {
+        if (StudentService().students.isEmpty) {
+          await StudentService().cargarDesdeBackend();
+        }
+        final misHijos = StudentService()
+            .students
+            .where((s) => s.acudienteCorreo.trim().toLowerCase() == sesion?.correo)
+            .toList();
+
+        final cursosDeHijos = <int, _Curso>{};
+        for (final hijo in misHijos) {
+          final id = int.tryParse(hijo.id);
+          if (id == null) continue;
+          final uri = Uri.parse('${ApiConfig.baseUrl}/cursos/').replace(
+            queryParameters: {'student_id': id.toString()},
+          );
+          final respuesta = await http.get(uri).timeout(const Duration(seconds: 45));
+          if (respuesta.statusCode == 200) {
+            final datos = jsonDecode(utf8.decode(respuesta.bodyBytes)) as List;
+            for (final c in datos) {
+              final curso = _Curso(id: c['id'] as int, title: c['title'] as String);
+              cursosDeHijos[curso.id] = curso;
+            }
+          }
+        }
+        _cursos = cursosDeHijos.values.toList();
+      }
+
+      for (final c in _cursos) {
+        _tituloCurso[c.id] = c.title;
+      }
+
+      await MaterialService().cargarPorCursos(_cursos.map((c) => c.id).toList());
+    } catch (_) {}
+
+    if (mounted) setState(() => _cargando = false);
   }
 
   Future<void> _abrirFormulario(BuildContext context) async {
-    if (GradoService().grados.isEmpty) {
-      await GradoService().cargarDesdeBackend();
-    }
-
-    if (!context.mounted) return;
-
-    if (GradoService().grados.isEmpty) {
+    if (_cursos.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No fue posible cargar los grados. Intenta de nuevo.'),
-        ),
+        const SnackBar(content: Text('No tienes cursos asignados todavía.')),
       );
       return;
     }
@@ -56,7 +115,7 @@ class _MaterialesScreenState extends State<MaterialesScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => const _FormularioMaterial(),
+      builder: (_) => _FormularioMaterial(cursos: _cursos),
     );
   }
 
@@ -79,17 +138,27 @@ class _MaterialesScreenState extends State<MaterialesScreen> {
         ],
       ),
     );
-    if (ok == true) MaterialService().eliminar(m.id);
+    if (ok == true) {
+      final error = await MaterialService().eliminar(m.id);
+      if (error != null && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final service = MaterialService();
+
     return Stack(
       children: [
         ListenableBuilder(
           listenable: service,
           builder: (context, _) {
+            if (_cargando) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
             final materiales = service.materiales;
             if (materiales.isEmpty) {
               return const Center(
@@ -138,7 +207,7 @@ class _MaterialesScreenState extends State<MaterialesScreen> {
                                     fontWeight: FontWeight.w600)),
                             const SizedBox(height: 2),
                             Text(
-                              '${m.grado}${m.materia.isNotEmpty ? ' · ${m.materia}' : ''} · ${_fmt(m.fecha)}',
+                              '${_tituloCurso[m.cursoId] ?? 'Curso'}${m.materia.isNotEmpty ? ' · ${m.materia}' : ''} · ${_fmt(m.fecha)}',
                               style: const TextStyle(
                                   color: AppColors.textSecondary,
                                   fontSize: 12.5),
@@ -200,11 +269,12 @@ class _MaterialesScreenState extends State<MaterialesScreen> {
                           ],
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.delete_outline_rounded,
-                            color: AppColors.danger),
-                        onPressed: () => _confirmarEliminar(context, m),
-                      ),
+                      if (_esDocente)
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline_rounded,
+                              color: AppColors.danger),
+                          onPressed: () => _confirmarEliminar(context, m),
+                        ),
                     ],
                   ),
                 );
@@ -212,22 +282,24 @@ class _MaterialesScreenState extends State<MaterialesScreen> {
             );
           },
         ),
-        Positioned(
-          right: 20,
-          bottom: 20,
-          child: FloatingActionButton.extended(
-            onPressed: () => _abrirFormulario(context),
-            icon: const Icon(Icons.add),
-            label: const Text('Nuevo material'),
+        if (_esDocente)
+          Positioned(
+            right: 20,
+            bottom: 20,
+            child: FloatingActionButton.extended(
+              onPressed: () => _abrirFormulario(context),
+              icon: const Icon(Icons.add),
+              label: const Text('Nuevo material'),
+            ),
           ),
-        ),
       ],
     );
   }
 }
 
 class _FormularioMaterial extends StatefulWidget {
-  const _FormularioMaterial();
+  final List<_Curso> cursos;
+  const _FormularioMaterial({required this.cursos});
 
   @override
   State<_FormularioMaterial> createState() => _FormularioMaterialState();
@@ -239,11 +311,10 @@ class _FormularioMaterialState extends State<_FormularioMaterial> {
   final _descC = TextEditingController();
   final _materiaC = TextEditingController();
   final _enlaceC = TextEditingController();
-  late String _grado = GradoService().grados.isNotEmpty
-      ? GradoService().grados.first
-      : '';
+  late int _cursoId = widget.cursos.first.id;
   String? _archivoNombre;
   Uint8List? _archivoBytes;
+  bool _guardando = false;
 
   @override
   void dispose() {
@@ -276,18 +347,29 @@ class _FormularioMaterialState extends State<_FormularioMaterial> {
     });
   }
 
-  void _guardar() {
+  Future<void> _guardar() async {
     if (!_formKey.currentState!.validate()) return;
-    MaterialService().agregar(MaterialDidactico(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+
+    setState(() => _guardando = true);
+
+    final error = await MaterialService().agregar(
+      cursoId: _cursoId,
       titulo: _tituloC.text.trim(),
       descripcion: _descC.text.trim(),
-      grado: _grado,
       materia: _materiaC.text.trim(),
       enlace: _enlaceC.text.trim(),
-      archivoNombre: _archivoNombre ?? '',
+      archivoNombre: _archivoNombre,
       archivoBytes: _archivoBytes,
-    ));
+    );
+
+    if (!mounted) return;
+
+    if (error != null) {
+      setState(() => _guardando = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      return;
+    }
+
     Navigator.of(context).pop();
   }
 
@@ -338,15 +420,15 @@ class _FormularioMaterialState extends State<_FormularioMaterial> {
                   icon: Icons.menu_book_rounded,
                 ),
                 const SizedBox(height: 12),
-                const Text('GRADO',
+                const Text('CURSO',
                     style: TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textSecondary,
                         letterSpacing: 0.6)),
                 const SizedBox(height: 6),
-                DropdownButtonFormField<String>(
-                  initialValue: _grado,
+                DropdownButtonFormField<int>(
+                  initialValue: _cursoId,
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: const Color(0xFFF3F4F7),
@@ -356,11 +438,10 @@ class _FormularioMaterialState extends State<_FormularioMaterial> {
                         borderRadius: BorderRadius.circular(10),
                         borderSide: BorderSide.none),
                   ),
-                  items: GradoService()
-                      .grados
-                      .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                  items: widget.cursos
+                      .map((c) => DropdownMenuItem(value: c.id, child: Text(c.title)))
                       .toList(),
-                  onChanged: (v) => setState(() => _grado = v ?? _grado),
+                  onChanged: (v) => setState(() => _cursoId = v ?? _cursoId),
                 ),
                 const SizedBox(height: 12),
                 LabeledTextField(
@@ -443,7 +524,7 @@ class _FormularioMaterialState extends State<_FormularioMaterial> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _guardar,
+                    onPressed: _guardando ? null : _guardar,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
@@ -451,7 +532,13 @@ class _FormularioMaterialState extends State<_FormularioMaterial> {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10)),
                     ),
-                    child: const Text('Publicar material'),
+                    child: _guardando
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Text('Publicar material'),
                   ),
                 ),
               ],
