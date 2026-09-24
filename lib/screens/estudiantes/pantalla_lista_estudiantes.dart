@@ -2,9 +2,8 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/colores_app.dart';
 import '../../models/estudiante.dart';
-import '../../models/notificacion.dart';
 import '../../services/servicio_estudiantes.dart';
-import '../../services/servicio_notificaciones.dart';
+import '../../services/servicio_notificaciones_backend.dart';
 import '../../services/servicio_whatsapp.dart';
 
 class EstudiantesListScreen extends StatefulWidget {
@@ -22,28 +21,73 @@ class _EstudiantesListScreenState extends State<EstudiantesListScreen> {
   }
 
   Future<void> _notificarRecogida(BuildContext context, Student s) async {
-    if (s.acudienteTelefono.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Este estudiante no tiene teléfono de acudiente registrado')),
+    final motivoController = TextEditingController();
+
+    final motivo = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('Avisar a ${s.acudienteNombre.isNotEmpty ? s.acudienteNombre : "el acudiente"}'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Debe pasar a recoger a ${s.nombreCompleto}. Explica por qué:'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: motivoController,
+              autofocus: true,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                hintText: 'Ej: El estudiante se siente mal del estómago...',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (motivoController.text.trim().isEmpty) return;
+              Navigator.pop(dialogContext, motivoController.text.trim());
+            },
+            child: const Text('Enviar aviso'),
+          ),
+        ],
+      ),
+    );
+
+    if (motivo == null || motivo.isEmpty) return;
+
+    try {
+      await NotificacionesBackendService().crearAlerta(
+        studentId: int.parse(s.id),
+        mensaje: motivo,
+        severidad: 'alta',
       );
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Aviso enviado a ${s.acudienteNombre.isNotEmpty ? s.acudienteNombre : "el acudiente"}')),
+        );
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se pudo enviar el aviso. Intenta de nuevo.')),
+        );
+      }
       return;
     }
 
-    NotificationService().agregar(
-      rol: RolNotificacion.acudiente,
-      destinatarioId: s.id,
-      titulo: 'Ya puede recoger a ${s.nombres}',
-      mensaje: 'Ya puede recoger a ${s.nombreCompleto} en la institución.',
-    );
-
-    final abierto = await WhatsAppService.notificarRecogida(
-      telefono: s.acudienteTelefono,
-      nombreEstudiante: s.nombreCompleto,
-    );
-
-    if (context.mounted && !abierto) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No se pudo abrir WhatsApp. Verifica el número.')),
+    if (s.acudienteTelefono.trim().isNotEmpty) {
+      await WhatsAppService.enviarMensaje(
+        telefono: s.acudienteTelefono,
+        mensaje: 'Hola, le informamos desde COLMAS que debe pasar a recoger a '
+            '${s.nombreCompleto}. Motivo: $motivo',
       );
     }
   }

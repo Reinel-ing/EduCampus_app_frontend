@@ -1,27 +1,135 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/colores_app.dart';
 import '../../models/notificacion.dart';
+import '../../services/servicio_acudientes.dart';
 import '../../services/servicio_notificaciones.dart';
+import '../../services/servicio_notificaciones_backend.dart';
 
-class NotificacionesScreen extends StatelessWidget {
+class NotificacionesScreen extends StatefulWidget {
   final RolNotificacion rol;
   const NotificacionesScreen({super.key, required this.rol});
 
-  IconData _iconoPara(String titulo) {
-    final t = titulo.toLowerCase();
-    if (t.contains('recoger') || t.contains('recogida')) return Icons.directions_walk_rounded;
-    if (t.contains('clase')) return Icons.school_rounded;
+  @override
+  State<NotificacionesScreen> createState() => _NotificacionesScreenState();
+}
+
+class _NotificacionesScreenState extends State<NotificacionesScreen> {
+  List<NotificacionBackend> _notificacionesReales = [];
+  bool _cargando = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.rol == RolNotificacion.acudiente) {
+      _cargarNotificacionesReales();
+    }
+  }
+
+  Future<void> _cargarNotificacionesReales() async {
+    final cuenta = AcudientesService().cuentaActual;
+    if (cuenta == null) return;
+
+    final acudienteId = int.tryParse(cuenta.id);
+    if (acudienteId == null) return;
+
+    setState(() => _cargando = true);
+
+    final notificaciones =
+        await NotificacionesBackendService().obtenerParaAcudiente(acudienteId);
+
+    if (!mounted) return;
+
+    setState(() {
+      _notificacionesReales = notificaciones;
+      _cargando = false;
+    });
+  }
+
+  IconData _iconoPara(String tipo, String titulo) {
+    if (tipo == 'recogida' || titulo.toLowerCase().contains('recoger')) {
+      return Icons.directions_walk_rounded;
+    }
+    if (tipo == 'alerta') return Icons.warning_amber_rounded;
     return Icons.campaign_rounded;
+  }
+
+  Future<void> _marcarLeidaReal(NotificacionBackend n) async {
+    if (n.leida) return;
+    await NotificacionesBackendService().marcarLeida(n.id);
+    _cargarNotificacionesReales();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (widget.rol == RolNotificacion.acudiente) {
+      return _construirListaReal();
+    }
+    return _construirListaLocal();
+  }
+
+  Widget _construirListaReal() {
+    if (_cargando && _notificacionesReales.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_notificacionesReales.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: _cargarNotificacionesReales,
+        child: ListView(
+          children: const [
+            SizedBox(height: 120),
+            Center(
+              child: Text('No hay notificaciones por ahora',
+                  style: TextStyle(color: AppColors.textSecondary)),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _cargarNotificacionesReales,
+      child: ListView.separated(
+        padding: const EdgeInsets.all(16),
+        itemCount: _notificacionesReales.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 10),
+        itemBuilder: (context, index) {
+          final n = _notificacionesReales[index];
+          return Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: n.leida ? const Color(0xFFE7E7EC) : AppColors.primary.withValues(alpha: 0.4),
+              ),
+            ),
+            child: ListTile(
+              leading: CircleAvatar(
+                backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                child: Icon(_iconoPara(n.tipo, n.titulo), color: AppColors.primary),
+              ),
+              title: Text(n.titulo,
+                  style: TextStyle(fontWeight: n.leida ? FontWeight.w500 : FontWeight.bold)),
+              subtitle: Text(n.mensaje),
+              trailing: Text(
+                '${n.fecha.hour.toString().padLeft(2, '0')}:${n.fecha.minute.toString().padLeft(2, '0')}',
+                style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+              ),
+              onTap: () => _marcarLeidaReal(n),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _construirListaLocal() {
     final service = NotificationService();
 
     return ListenableBuilder(
       listenable: service,
       builder: (context, _) {
-        final lista = service.paraRol(rol);
+        final lista = service.paraRol(widget.rol);
 
         if (lista.isEmpty) {
           return const Center(
@@ -40,13 +148,13 @@ class NotificacionesScreen extends StatelessWidget {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: n.leida ? const Color(0xFFE7E7EC) : AppColors.primary.withOpacity(0.4),
+                  color: n.leida ? const Color(0xFFE7E7EC) : AppColors.primary.withValues(alpha: 0.4),
                 ),
               ),
               child: ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: AppColors.primary.withOpacity(0.1),
-                  child: Icon(_iconoPara(n.titulo), color: AppColors.primary),
+                  backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                  child: Icon(_iconoPara('', n.titulo), color: AppColors.primary),
                 ),
                 title: Text(n.titulo, style: TextStyle(fontWeight: n.leida ? FontWeight.w500 : FontWeight.bold)),
                 subtitle: Text(n.mensaje),

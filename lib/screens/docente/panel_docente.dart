@@ -12,6 +12,7 @@ import '../materiales/pantalla_materiales.dart';
 import '../calendario/pantalla_calendario.dart';
 import 'contenido_inicio_docente.dart';
 import 'mis_estudiantes_docente_screen.dart';
+import 'pantalla_finalizar_clase.dart';
 
 class DocenteDashboard extends StatelessWidget {
   const DocenteDashboard({super.key});
@@ -34,6 +35,7 @@ class DocenteDashboard extends StatelessWidget {
           items: [
             NavItem(label: 'Inicio', icon: Icons.home_rounded, screenBuilder: (_) => const DocenteHomeContent()),
             NavItem(label: 'Mis Estudiantes', icon: Icons.groups_2_rounded, screenBuilder: (_) => const MisEstudiantesDocenteScreen()),
+            NavItem(label: 'Ya pueden recoger', icon: Icons.campaign_rounded, screenBuilder: (_) => const FinalizarClaseScreen()),
           ],
         ),
         NavSection(

@@ -6,6 +6,7 @@ import '../../services/servicio_estudiantes.dart';
 import '../../services/servicio_alertas.dart';
 import '../../services/servicio_clases.dart';
 import '../../services/servicio_materiales.dart';
+import 'pantalla_finalizar_clase.dart';
 
 class DocenteHomeContent extends StatelessWidget {
   const DocenteHomeContent({super.key});
@@ -115,10 +116,22 @@ class DocenteHomeContent extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _AccionCard(
-                      icon: Icons.check_circle_outline_rounded,
-                      label: 'Finalizar\nclase',
+                      icon: Icons.campaign_rounded,
+                      label: 'Ya pueden\nrecoger',
                       color: AppColors.accent,
-                      onTap: () {},
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => Scaffold(
+                            appBar: AppBar(
+                              title: const Text('Ya pueden recoger'),
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                            ),
+                            body: const FinalizarClaseScreen(),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 10),
