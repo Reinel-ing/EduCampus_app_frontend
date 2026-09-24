@@ -120,9 +120,13 @@ class _LlenarFormularioScreenState extends State<LlenarFormularioScreen> {
     final fecha = DateTime.now();
     final fechaStr = '${fecha.day.toString().padLeft(2, '0')}/${fecha.month.toString().padLeft(2, '0')}/${fecha.year}';
 
+    const anchoPagina = PdfPageFormat.a4;
+    final anchoUtil = anchoPagina.availableWidth - 64;
+    final anchoCampo = (anchoUtil - 16) / 2;
+
     doc.addPage(
       pw.Page(
-        pageFormat: PdfPageFormat.a4,
+        pageFormat: anchoPagina,
         margin: const pw.EdgeInsets.all(32),
         build: (pw.Context ctx) => pw.Column(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -134,27 +138,49 @@ class _LlenarFormularioScreenState extends State<LlenarFormularioScreen> {
             pw.SizedBox(height: 4),
             pw.Text('Fecha: $fechaStr', style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey600)),
             pw.SizedBox(height: 20),
-            pw.Table(
-              border: pw.TableBorder.all(color: PdfColors.grey400),
-              columnWidths: const {
-                0: pw.FlexColumnWidth(1.2),
-                1: pw.FlexColumnWidth(2),
-              },
-              children: [
-                for (final c in _campos)
-                  pw.TableRow(
-                    children: [
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(8),
-                        child: pw.Text(c.etiqueta, style: pw.TextStyle(font: pw.Font.helveticaBold(), fontSize: 11)),
+            pw.Container(
+              padding: const pw.EdgeInsets.all(16),
+              decoration: pw.BoxDecoration(
+                border: pw.Border.all(color: PdfColors.grey300),
+                borderRadius: const pw.BorderRadius.all(pw.Radius.circular(10)),
+              ),
+              child: pw.Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: [
+                  for (final c in _campos)
+                    pw.SizedBox(
+                      width: anchoCampo,
+                      child: pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.Text(
+                            c.etiqueta.toUpperCase(),
+                            style: pw.TextStyle(
+                              fontSize: 9,
+                              font: pw.Font.helveticaBold(),
+                              color: PdfColors.grey600,
+                              letterSpacing: 0.6,
+                            ),
+                          ),
+                          pw.SizedBox(height: 4),
+                          pw.Container(
+                            width: double.infinity,
+                            padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                            decoration: pw.BoxDecoration(
+                              color: PdfColors.grey100,
+                              borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
+                            ),
+                            child: pw.Text(
+                              c.controller.text.trim(),
+                              style: const pw.TextStyle(fontSize: 11),
+                            ),
+                          ),
+                        ],
                       ),
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(8),
-                        child: pw.Text(c.controller.text.trim(), style: const pw.TextStyle(fontSize: 11)),
-                      ),
-                    ],
-                  ),
-              ],
+                    ),
+                ],
+              ),
             ),
           ],
         ),
