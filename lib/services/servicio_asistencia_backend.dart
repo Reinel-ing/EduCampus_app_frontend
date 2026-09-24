@@ -139,7 +139,8 @@ class AsistenciaBackendService {
         .toList();
   }
 
-  String urlReporteDiario(DateTime fecha) {
-    return '${ApiConfig.baseUrl}/reportes/asistencia-diaria/?fecha=${formatearFechaISO(fecha)}';
+  String urlReporteDiario({required int cursoId, required DateTime fecha}) {
+    return '${ApiConfig.baseUrl}/reportes/asistencia-diaria/'
+        '?curso_id=$cursoId&fecha=${formatearFechaISO(fecha)}';
   }
 }
