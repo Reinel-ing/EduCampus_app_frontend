@@ -1,9 +1,19 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme/colores_app.dart';
+import '../../services/api_config.dart';
 import '../../services/servicio_asistencia_backend.dart';
 import '../../services/servicio_docentes.dart';
+
+class _Curso {
+  final int id;
+  final String title;
+  const _Curso({required this.id, required this.title});
+}
 
 class AsistenciaScreen extends StatefulWidget {
   const AsistenciaScreen({super.key});
@@ -16,12 +26,33 @@ class _AsistenciaScreenState extends State<AsistenciaScreen> {
   DateTime _fecha = DateTime.now();
   Map<int, AsistenciaDocenteBackend> _registros = {};
   bool _cargando = true;
+  List<_Curso> _cursos = [];
+  int? _cursoSeleccionado;
 
   @override
   void initState() {
     super.initState();
     TeacherService().cargarDesdeBackend();
     _cargarAsistencias();
+    _cargarCursos();
+  }
+
+  Future<void> _cargarCursos() async {
+    try {
+      final uri = Uri.parse('${ApiConfig.baseUrl}/cursos/');
+      final respuesta = await http.get(uri).timeout(const Duration(seconds: 45));
+
+      if (respuesta.statusCode == 200) {
+        final datos = jsonDecode(utf8.decode(respuesta.bodyBytes)) as List;
+        if (!mounted) return;
+        setState(() {
+          _cursos = datos
+              .map((c) => _Curso(id: c['id'] as int, title: c['title'] as String))
+              .toList();
+          _cursoSeleccionado = _cursos.isNotEmpty ? _cursos.first.id : null;
+        });
+      }
+    } catch (_) {}
   }
 
   String _formatearFecha(DateTime f) {
@@ -65,7 +96,17 @@ class _AsistenciaScreenState extends State<AsistenciaScreen> {
   }
 
   Future<void> _descargarReporte() async {
-    final url = AsistenciaBackendService().urlReporteDiario(_fecha);
+    if (_cursoSeleccionado == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Selecciona un curso para descargar el reporte.')),
+      );
+      return;
+    }
+
+    final url = AsistenciaBackendService().urlReporteDiario(
+      cursoId: _cursoSeleccionado!,
+      fecha: _fecha,
+    );
     final uri = Uri.parse(url);
     await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
@@ -84,10 +125,10 @@ class _AsistenciaScreenState extends State<AsistenciaScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               color: Colors.white,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Column(
                 children: [
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       IconButton(
                         icon: const Icon(Icons.chevron_left_rounded),
@@ -106,10 +147,31 @@ class _AsistenciaScreenState extends State<AsistenciaScreen> {
                       ),
                     ],
                   ),
-                  OutlinedButton.icon(
-                    onPressed: _descargarReporte,
-                    icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
-                    label: const Text('Reporte del día'),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(color: const Color(0xFFF3F4F7), borderRadius: BorderRadius.circular(10)),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<int>(
+                              value: _cursoSeleccionado,
+                              isExpanded: true,
+                              hint: const Text('Selecciona un curso'),
+                              items: _cursos.map((c) => DropdownMenuItem(value: c.id, child: Text(c.title))).toList(),
+                              onChanged: (v) => setState(() => _cursoSeleccionado = v),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      OutlinedButton.icon(
+                        onPressed: _descargarReporte,
+                        icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
+                        label: const Text('Reporte'),
+                      ),
+                    ],
                   ),
                 ],
               ),
