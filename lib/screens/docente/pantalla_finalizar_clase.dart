@@ -1,11 +1,19 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
 import '../../core/theme/colores_app.dart';
-import '../../models/estudiante.dart';
-import '../../services/servicio_clases.dart';
-import '../../services/servicio_estudiantes.dart';
-import '../../services/servicio_grados.dart';
-import '../../services/servicio_whatsapp.dart';
-import '../../widgets/campo_texto_etiquetado.dart';
+import '../../services/api_config.dart';
+import '../../services/servicio_auth.dart';
+import '../../services/servicio_notificaciones_backend.dart';
+
+class _CursoDocente {
+  final int id;
+  final String title;
+
+  const _CursoDocente({required this.id, required this.title});
+}
 
 class FinalizarClaseScreen extends StatefulWidget {
   const FinalizarClaseScreen({super.key});
@@ -15,55 +23,82 @@ class FinalizarClaseScreen extends StatefulWidget {
 }
 
 class _FinalizarClaseScreenState extends State<FinalizarClaseScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _materiaController = TextEditingController();
-  final _docenteController = TextEditingController();
-  final _observacionController = TextEditingController();
-
-  String _grado = GradoService().grados.first;
-  bool _notificarAcudientes = true;
+  List<_CursoDocente> _cursos = [];
+  int? _cursoSeleccionado;
+  bool _cargandoCursos = true;
   bool _enviando = false;
+  String? _errorMensaje;
+  String? _mensajeExito;
 
   @override
-  void dispose() {
-    _materiaController.dispose();
-    _docenteController.dispose();
-    _observacionController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _cargarCursos();
   }
 
-  Future<void> _finalizar() async {
-    if (!_formKey.currentState!.validate()) return;
+  Future<void> _cargarCursos() async {
+    final sesion = AuthService().sesionActual;
 
-    setState(() => _enviando = true);
-
-    ClasesService().registrar(
-      docenteNombre: _docenteController.text.trim(),
-      materia: _materiaController.text.trim(),
-      grado: _grado,
-      observacion: _observacionController.text.trim(),
-    );
-
-    if (_notificarAcudientes) {
-      final estudiantes = StudentService().students.where((Student s) => s.grado == _grado).toList();
-      for (final s in estudiantes) {
-        if (s.acudienteTelefono.isNotEmpty) {
-          await WhatsAppService.notificarRecogida(
-            telefono: s.acudienteTelefono,
-            nombreEstudiante: s.nombreCompleto,
-          );
-        }
-      }
+    if (sesion == null) {
+      setState(() => _cargandoCursos = false);
+      return;
     }
 
-    setState(() => _enviando = false);
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Clase finalizada y registrada')),
+    try {
+      final uri = Uri.parse('${ApiConfig.baseUrl}/cursos/').replace(
+        queryParameters: {'instructor_id': sesion.usuarioId.toString()},
       );
-      _materiaController.clear();
-      _observacionController.clear();
+      final respuesta = await http.get(uri).timeout(const Duration(seconds: 10));
+
+      if (respuesta.statusCode == 200) {
+        final datos = jsonDecode(utf8.decode(respuesta.bodyBytes)) as List;
+        setState(() {
+          _cursos = datos
+              .map((c) => _CursoDocente(id: c['id'] as int, title: c['title'] as String))
+              .toList();
+          _cursoSeleccionado = _cursos.isNotEmpty ? _cursos.first.id : null;
+          _cargandoCursos = false;
+        });
+      } else {
+        setState(() => _cargandoCursos = false);
+      }
+    } catch (_) {
+      setState(() => _cargandoCursos = false);
+    }
+  }
+
+  Future<void> _avisarRecogida() async {
+    if (_cursoSeleccionado == null) return;
+
+    setState(() {
+      _enviando = true;
+      _errorMensaje = null;
+      _mensajeExito = null;
+    });
+
+    try {
+      final notificados = await NotificacionesBackendService().avisarRecogida(_cursoSeleccionado!);
+
+      if (!mounted) return;
+
+      setState(() {
+        _enviando = false;
+        _mensajeExito = notificados > 0
+            ? 'Aviso enviado a $notificados acudiente(s).'
+            : 'No hay acudientes registrados para notificar en este curso.';
+      });
+    } on AuthException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _enviando = false;
+        _errorMensaje = error.mensaje;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _enviando = false;
+        _errorMensaje = 'Ocurrió un error inesperado. Intenta de nuevo.';
+      });
     }
   }
 
@@ -71,60 +106,56 @@ class _FinalizarClaseScreenState extends State<FinalizarClaseScreen> {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.school_rounded, color: AppColors.primary, size: 32),
-                  SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Finalizar clase',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
-                        SizedBox(height: 4),
-                        Text(
-                          'Registra el fin de clase y notifica a los acudientes.',
-                          style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-                        ),
-                      ],
-                    ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.school_rounded, color: AppColors.primary, size: 32),
+                SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Ya pueden recoger a los estudiantes',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+                      SizedBox(height: 4),
+                      Text(
+                        'Elige el curso que acaba de terminar. Se avisa al instante '
+                        'solo a los acudientes de los estudiantes de ese curso.',
+                        style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                      ),
+                    ],
                   ),
-                ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          if (_cargandoCursos)
+            const Center(child: Padding(
+              padding: EdgeInsets.all(24),
+              child: CircularProgressIndicator(),
+            ))
+          else if (_cursos.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Text(
+                'No tienes cursos asignados todavía.',
+                style: TextStyle(color: AppColors.textSecondary),
               ),
-            ),
-            const SizedBox(height: 24),
-
-            LabeledTextField(
-              controller: _docenteController,
-              label: 'Tu nombre',
-              hint: 'Nombre del docente',
-              icon: Icons.badge_rounded,
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Campo requerido' : null,
-            ),
-            const SizedBox(height: 16),
-            LabeledTextField(
-              controller: _materiaController,
-              label: 'Materia',
-              hint: 'Ej. Matemáticas',
-              icon: Icons.menu_book_rounded,
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Campo requerido' : null,
-            ),
-            const SizedBox(height: 16),
-
+            )
+          else ...[
             const Text(
-              'GRADO',
+              'CURSO',
               style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 0.6),
             ),
             const SizedBox(height: 6),
@@ -132,56 +163,61 @@ class _FinalizarClaseScreenState extends State<FinalizarClaseScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(color: const Color(0xFFF3F4F7), borderRadius: BorderRadius.circular(10)),
               child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: _grado,
+                child: DropdownButton<int>(
+                  value: _cursoSeleccionado,
                   isExpanded: true,
-                  items: GradoService().grados
-                      .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                  items: _cursos
+                      .map((c) => DropdownMenuItem(value: c.id, child: Text(c.title)))
                       .toList(),
-                  onChanged: (v) => setState(() => _grado = v!),
+                  onChanged: (v) => setState(() => _cursoSeleccionado = v),
                 ),
               ),
             ),
-            const SizedBox(height: 16),
 
-            LabeledTextField(
-              controller: _observacionController,
-              label: 'Observación (opcional)',
-              hint: 'Ej. Tarea: resolver ejercicios 1-5',
-              icon: Icons.notes_rounded,
-            ),
-            const SizedBox(height: 20),
-
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE7E7EC)),
+            if (_errorMensaje != null) ...[
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFDECEA),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFF5C2C0)),
+                ),
+                child: Text(_errorMensaje!,
+                    style: const TextStyle(color: Color(0xFFC0392B), fontWeight: FontWeight.w600)),
               ),
-              child: SwitchListTile(
-                value: _notificarAcudientes,
-                onChanged: (v) => setState(() => _notificarAcudientes = v),
-                title: const Text('Notificar acudientes por WhatsApp',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
-                subtitle: const Text('Se enviará mensaje de recogida a cada acudiente del grado'),
-                activeColor: AppColors.primary,
-              ),
-            ),
+            ],
 
-            const SizedBox(height: 32),
+            if (_mensajeExito != null) ...[
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8F5E9),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFA5D6A7)),
+                ),
+                child: Text(_mensajeExito!,
+                    style: const TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.w600)),
+              ),
+            ],
+
+            const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               height: 52,
               child: ElevatedButton.icon(
-                onPressed: _enviando ? null : _finalizar,
+                onPressed: _enviando ? null : _avisarRecogida,
                 icon: _enviando
                     ? const SizedBox(
                         width: 18,
                         height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       )
-                    : const Icon(Icons.check_circle_rounded),
-                label: Text(_enviando ? 'Enviando...' : 'Finalizar clase'),
+                    : const Icon(Icons.campaign_rounded),
+                label: Text(_enviando ? 'Enviando...' : 'Avisar a los acudientes'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
@@ -190,7 +226,7 @@ class _FinalizarClaseScreenState extends State<FinalizarClaseScreen> {
               ),
             ),
           ],
-        ),
+        ],
       ),
     );
   }

@@ -10,11 +10,15 @@ class SesionUsuario {
   final String accessToken;
   final String rol;
   final String nombre;
+  final int usuarioId;
+  final String correo;
 
   const SesionUsuario({
     required this.accessToken,
     required this.rol,
     required this.nombre,
+    required this.usuarioId,
+    required this.correo,
   });
 }
 
@@ -66,6 +70,8 @@ class AuthService extends ChangeNotifier {
         accessToken: datos['access_token'] as String,
         rol: datos['rol'] as String,
         nombre: datos['nombre'] as String,
+        usuarioId: datos['usuario_id'] as int,
+        correo: datos['correo'] as String,
       );
 
       _sesionActual = sesion;
