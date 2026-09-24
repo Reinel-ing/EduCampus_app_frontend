@@ -120,6 +120,8 @@ class _FormularioDocenteState extends State<_FormularioDocente> {
   late final TextEditingController _correoCtrl;
   bool _isLoading = false;
   String? _errorMensaje;
+  String? _contrasenaReal;
+  bool _consultandoPassword = false;
 
   @override
   void initState() {
@@ -131,6 +133,17 @@ class _FormularioDocenteState extends State<_FormularioDocente> {
     _especialidadCtrl = TextEditingController(text: d?.especialidad ?? '');
     _telefonoCtrl = TextEditingController(text: d?.telefono ?? '');
     _correoCtrl = TextEditingController(text: d?.correo ?? '');
+
+    if (d != null) {
+      _consultandoPassword = true;
+      AdminService().consultarPassword(d.correo).then((valor) {
+        if (!mounted) return;
+        setState(() {
+          _contrasenaReal = valor;
+          _consultandoPassword = false;
+        });
+      });
+    }
   }
 
   @override
@@ -325,10 +338,26 @@ class _FormularioDocenteState extends State<_FormularioDocente> {
               if (!isNew) ...[
                 Builder(builder: (context) {
                   final docente = widget.docente!;
-                  final contrasena = docente.contrasena.isNotEmpty
-                      ? docente.contrasena
-                      : (ContrasenasCache.obtener(docente.correo) ?? '');
-                  if (contrasena.isEmpty) return const SizedBox.shrink();
+                  final contrasena = _contrasenaReal ??
+                      (docente.contrasena.isNotEmpty
+                          ? docente.contrasena
+                          : ContrasenasCache.obtener(docente.correo));
+
+                  if (_consultandoPassword && contrasena == null) {
+                    return const Padding(
+                      padding: EdgeInsets.only(top: 8),
+                      child: SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    );
+                  }
+
+                  if (contrasena == null || contrasena.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
+
                   return Padding(
                     padding: const EdgeInsets.only(top: 4),
                     child: Column(
