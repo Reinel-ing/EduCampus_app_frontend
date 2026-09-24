@@ -1,5 +1,9 @@
+// ignore_for_file: avoid_web_libraries_in_flutter
+import 'dart:html' as html;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 import '../../core/theme/colores_app.dart';
 import '../../models/estudiante.dart';
 import '../../models/formulario.dart';
@@ -109,6 +113,62 @@ class _LlenarFormularioScreenState extends State<LlenarFormularioScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Datos copiados al portapapeles')),
     );
+  }
+
+  Future<void> _guardarPdf() async {
+    final doc = pw.Document();
+    final fecha = DateTime.now();
+    final fechaStr = '${fecha.day.toString().padLeft(2, '0')}/${fecha.month.toString().padLeft(2, '0')}/${fecha.year}';
+
+    doc.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(32),
+        build: (pw.Context ctx) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text(
+              widget.plantilla.nombre,
+              style: pw.TextStyle(fontSize: 18, font: pw.Font.helveticaBold()),
+            ),
+            pw.SizedBox(height: 4),
+            pw.Text('Fecha: $fechaStr', style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey600)),
+            pw.SizedBox(height: 20),
+            pw.Table(
+              border: pw.TableBorder.all(color: PdfColors.grey400),
+              columnWidths: const {
+                0: pw.FlexColumnWidth(1.2),
+                1: pw.FlexColumnWidth(2),
+              },
+              children: [
+                for (final c in _campos)
+                  pw.TableRow(
+                    children: [
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(8),
+                        child: pw.Text(c.etiqueta, style: pw.TextStyle(font: pw.Font.helveticaBold(), fontSize: 11)),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(8),
+                        child: pw.Text(c.controller.text.trim(), style: const pw.TextStyle(fontSize: 11)),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+
+    final bytes = await doc.save();
+    final blob = html.Blob([bytes], 'application/pdf');
+    final url = html.Url.createObjectUrlFromBlob(blob);
+    html.AnchorElement(href: url)
+      ..setAttribute(
+          'download', '${widget.plantilla.nombre.replaceAll(' ', '_')}.pdf')
+      ..click();
+    html.Url.revokeObjectUrl(url);
   }
 
   @override
@@ -288,10 +348,15 @@ class _LlenarFormularioScreenState extends State<LlenarFormularioScreen> {
                           size: 18),
                       label: const Text('Limpiar'),
                     ),
-                    ElevatedButton.icon(
+                    OutlinedButton.icon(
                       onPressed: _copiar,
                       icon: const Icon(Icons.copy_rounded, size: 18),
                       label: const Text('Copiar datos'),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: _guardarPdf,
+                      icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
+                      label: const Text('Guardar en PDF'),
                     ),
                   ],
                 ),
