@@ -1,36 +1,37 @@
-enum TipoRegistroAcademico { nota, logro, observacion }
-
-extension TipoRegistroAcademicoLabel on TipoRegistroAcademico {
-  String get etiqueta {
-    switch (this) {
-      case TipoRegistroAcademico.nota:
-        return 'Nota';
-      case TipoRegistroAcademico.logro:
-        return 'Logro';
-      case TipoRegistroAcademico.observacion:
-        return 'Observación';
-    }
-  }
-}
+const periodosValidos = ['I', 'II', 'III', 'IV'];
 
 class RegistroAcademico {
   final String id;
   final String estudianteId;
-  String materia;
-  TipoRegistroAcademico tipo;
-  String titulo;
-  String descripcion;
-  double? calificacion;
+  final int cursoId;
+  String cursoTitulo;
+  String periodo;
+  double score;
+  String logro;
   DateTime fecha;
 
   RegistroAcademico({
     required this.id,
     required this.estudianteId,
-    required this.materia,
-    required this.tipo,
-    required this.titulo,
-    this.descripcion = '',
-    this.calificacion,
+    required this.cursoId,
+    required this.cursoTitulo,
+    required this.periodo,
+    required this.score,
+    this.logro = '',
     DateTime? fecha,
   }) : fecha = fecha ?? DateTime.now();
+}
+
+class ObservacionBoletin {
+  final String id;
+  final String estudianteId;
+  final String periodo;
+  String texto;
+
+  ObservacionBoletin({
+    required this.id,
+    required this.estudianteId,
+    required this.periodo,
+    required this.texto,
+  });
 }
