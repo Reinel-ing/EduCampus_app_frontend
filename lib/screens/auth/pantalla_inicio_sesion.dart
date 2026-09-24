@@ -1,13 +1,10 @@
 import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
+import '../../core/destino_por_rol.dart';
 import '../../core/theme/colores_app.dart';
 import '../../widgets/campo_texto_etiquetado.dart';
-import '../../services/servicio_acudientes.dart';
 import '../../services/servicio_auth.dart';
 import '../../services/servicio_instalacion.dart';
-import '../admin/panel_admin.dart';
-import '../docente/panel_docente.dart';
-import '../acudiente/panel_acudiente.dart';
 import 'dialogo_recuperar_contrasena.dart';
 
 final _correoRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
@@ -35,28 +32,6 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  /// Construye la pantalla destino según el rol devuelto por el backend.
-  /// Devuelve null si el rol no tiene una pantalla propia en esta app.
-  Widget? _destinoParaRol(String rol, String correo) {
-    switch (rol) {
-      case 'administrador':
-        return const AdminDashboard();
-      case 'profesor':
-        return const DocenteDashboard();
-      case 'acudiente':
-        final acudientes = AcudientesService();
-        for (final c in acudientes.cuentas) {
-          if (c.correo.trim().toLowerCase() == correo) {
-            acudientes.seleccionarCuenta(c.id);
-            break;
-          }
-        }
-        return const AcudienteDashboard();
-      default:
-        return null;
-    }
-  }
-
   void _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -75,7 +50,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (!mounted) return;
 
-      final destino = _destinoParaRol(sesion.rol, correo);
+      final destino = destinoParaRol(sesion.rol, correo);
 
       if (destino == null) {
         setState(() {
