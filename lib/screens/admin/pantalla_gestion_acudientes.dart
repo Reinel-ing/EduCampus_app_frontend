@@ -5,6 +5,7 @@ import '../../services/servicio_acudientes.dart';
 import '../../services/servicio_admin.dart';
 import '../../services/servicio_auth.dart';
 import '../../services/servicio_estudiantes.dart';
+import '../../widgets/contrasena_copiable.dart';
 
 class GestionAcudientesScreen extends StatefulWidget {
   const GestionAcudientesScreen({super.key});
@@ -67,7 +68,14 @@ class _GestionAcudientesScreenState extends State<GestionAcudientesScreen> {
                       ),
                     ),
                     title: Text(c.nombre, style: const TextStyle(fontWeight: FontWeight.w600)),
-                    subtitle: Text('${c.correo} · ${c.estudianteIds.length} estudiante(s)'),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('${c.correo} · ${c.estudianteIds.length} estudiante(s)'),
+                        ContrasenaEnLista(contrasena: c.contrasena),
+                      ],
+                    ),
                     trailing: const Icon(Icons.chevron_right_rounded),
                     onTap: () => _abrirFormulario(context, cuenta: c),
                   ),
@@ -185,12 +193,7 @@ class _FormularioAcudienteState extends State<_FormularioAcudiente> {
               Text('Correo: ${nueva.correo}'),
               const SizedBox(height: 8),
               const Text('Contraseña temporal:', style: TextStyle(fontWeight: FontWeight.bold)),
-              Container(
-                margin: const EdgeInsets.only(top: 6),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: const Color(0xFFF3F4F7), borderRadius: BorderRadius.circular(8)),
-                child: Text(nueva.contrasena, style: const TextStyle(fontFamily: 'monospace', fontSize: 18, fontWeight: FontWeight.bold)),
-              ),
+              ContrasenaCopiable(contrasena: nueva.contrasena),
             ],
           ),
           actions: [
@@ -231,6 +234,9 @@ class _FormularioAcudienteState extends State<_FormularioAcudiente> {
         password: nuevaContrasena,
       );
 
+      cuenta.contrasena = nuevaContrasena;
+      AcudientesService().actualizar(cuenta);
+
       if (!mounted) return;
       setState(() => _isLoading = false);
 
@@ -246,12 +252,7 @@ class _FormularioAcudienteState extends State<_FormularioAcudiente> {
               Text('Correo: ${cuenta.correo}'),
               const SizedBox(height: 8),
               const Text('Nueva contraseña:', style: TextStyle(fontWeight: FontWeight.bold)),
-              Container(
-                margin: const EdgeInsets.only(top: 6),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: const Color(0xFFF3F4F7), borderRadius: BorderRadius.circular(8)),
-                child: Text(nuevaContrasena, style: const TextStyle(fontFamily: 'monospace', fontSize: 18, fontWeight: FontWeight.bold)),
-              ),
+              ContrasenaCopiable(contrasena: nuevaContrasena),
             ],
           ),
           actions: [
