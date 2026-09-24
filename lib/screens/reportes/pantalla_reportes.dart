@@ -4,11 +4,50 @@ import '../../services/servicio_estudiantes.dart';
 import '../../services/servicio_docentes.dart';
 import '../../services/servicio_evaluacion.dart';
 import '../../services/servicio_convivencia.dart';
-import '../../services/servicio_asistencia.dart';
+import '../../services/servicio_asistencia_backend.dart';
 import '../../models/situacion_convivencia.dart';
 
-class ReportesScreen extends StatelessWidget {
+class ReportesScreen extends StatefulWidget {
   const ReportesScreen({super.key});
+
+  @override
+  State<ReportesScreen> createState() => _ReportesScreenState();
+}
+
+class _ReportesScreenState extends State<ReportesScreen> {
+  String? _asistenciaHoy;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarAsistenciaHoy();
+
+    final estudiantesService = StudentService();
+    estudiantesService.cargarDesdeBackendSiHaceFalta().then((_) {
+      if (estudiantesService.students.isNotEmpty) {
+        EvaluacionService().cargarPorEstudiantes(estudiantesService.students.map((s) => s.id).toList());
+      }
+    });
+    TeacherService().cargarDesdeBackend();
+    ConvivenciaService().cargarDesdeBackendSiHaceFalta();
+  }
+
+  Future<void> _cargarAsistenciaHoy() async {
+    final registros = await AsistenciaBackendService().listarPorFecha(DateTime.now());
+
+    if (!mounted) return;
+
+    if (registros.isEmpty) {
+      setState(() => _asistenciaHoy = 'N/A');
+      return;
+    }
+
+    final presentes = registros
+        .where((r) => r.status == 'presente' || r.status == 'tarde')
+        .length;
+
+    setState(() => _asistenciaHoy = '${(presentes / registros.length * 100).toStringAsFixed(0)}%');
+  }
 
   Widget _tarjeta({required String titulo, required String valor, required IconData icono, required Color color}) {
     return Container(
@@ -48,7 +87,6 @@ class ReportesScreen extends StatelessWidget {
     final docentesService = TeacherService();
     final evaluacionService = EvaluacionService();
     final convivenciaService = ConvivenciaService();
-    final asistenciaService = AsistenciaService();
 
     return ListenableBuilder(
       listenable: Listenable.merge([
@@ -56,7 +94,6 @@ class ReportesScreen extends StatelessWidget {
         docentesService,
         evaluacionService,
         convivenciaService,
-        asistenciaService,
       ]),
       builder: (context, _) {
         final estudiantes = estudiantesService.students;
@@ -69,8 +106,6 @@ class ReportesScreen extends StatelessWidget {
 
         final positivas = situaciones.where((s) => s.tipo == TipoSituacion.positiva).length;
         final negativas = situaciones.where((s) => s.tipo == TipoSituacion.negativa).length;
-
-        final asistenciaHoy = (asistenciaService.porcentajeAsistenciaHoy() * 100).toStringAsFixed(0);
 
         return ListView(
           padding: const EdgeInsets.all(20),
@@ -91,7 +126,12 @@ class ReportesScreen extends StatelessWidget {
                   icono: Icons.grade_rounded,
                   color: AppColors.success,
                 ),
-                _tarjeta(titulo: 'Asistencia de hoy', valor: '$asistenciaHoy%', icono: Icons.event_available_rounded, color: AppColors.success),
+                _tarjeta(
+                  titulo: 'Asistencia de hoy',
+                  valor: _asistenciaHoy ?? '...',
+                  icono: Icons.event_available_rounded,
+                  color: AppColors.success,
+                ),
                 _tarjeta(titulo: 'Situaciones positivas', valor: '$positivas', icono: Icons.thumb_up_rounded, color: AppColors.success),
                 _tarjeta(titulo: 'Situaciones negativas', valor: '$negativas', icono: Icons.report_problem_rounded, color: AppColors.danger),
               ],

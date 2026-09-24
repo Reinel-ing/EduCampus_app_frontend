@@ -51,7 +51,11 @@ class AlertasAlumnosScreen extends StatelessWidget {
       ),
     );
     if (confirmado == true) {
-      AlertasService().atender(alerta.id, respuesta: respCtrl.text.trim());
+      final messenger = ScaffoldMessenger.of(context);
+      final error = await AlertasService().atender(alerta.id, respuesta: respCtrl.text.trim());
+      if (error != null) {
+        messenger.showSnackBar(SnackBar(content: Text(error)));
+      }
     }
   }
 
@@ -79,6 +83,7 @@ class AlertasAlumnosScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final service = AlertasService();
+    service.cargarDesdeBackendSiHaceFalta();
     return ListenableBuilder(
       listenable: service,
       builder: (context, _) {

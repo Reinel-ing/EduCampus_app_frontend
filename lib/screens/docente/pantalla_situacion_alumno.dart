@@ -24,6 +24,14 @@ class _SituacionAlumnoScreenState extends State<SituacionAlumnoScreen> {
   NivelAlerta _nivel = NivelAlerta.informativo;
 
   @override
+  void initState() {
+    super.initState();
+    if (StudentService().students.isEmpty) {
+      StudentService().cargarDesdeBackend();
+    }
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     _descripcionController.dispose();
@@ -43,7 +51,9 @@ class _SituacionAlumnoScreenState extends State<SituacionAlumnoScreen> {
     });
   }
 
-  void _reportar() {
+  bool _enviando = false;
+
+  Future<void> _reportar() async {
     if (!_formKey.currentState!.validate()) return;
     if (_estudianteSeleccionado == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -52,7 +62,9 @@ class _SituacionAlumnoScreenState extends State<SituacionAlumnoScreen> {
       return;
     }
 
-    AlertasService().agregar(
+    setState(() => _enviando = true);
+
+    final error = await AlertasService().agregar(
       estudianteId: _estudianteSeleccionado!.id,
       estudianteNombre: _estudianteSeleccionado!.nombreCompleto,
       grado: _estudianteSeleccionado!.grado,
@@ -63,11 +75,20 @@ class _SituacionAlumnoScreenState extends State<SituacionAlumnoScreen> {
       nivel: _nivel,
     );
 
+    if (!mounted) return;
+
+    if (error != null) {
+      setState(() => _enviando = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      return;
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Alerta reportada al administrador')),
     );
 
     setState(() {
+      _enviando = false;
       _estudianteSeleccionado = null;
       _searchController.clear();
       _descripcionController.clear();
@@ -216,9 +237,15 @@ class _SituacionAlumnoScreenState extends State<SituacionAlumnoScreen> {
               width: double.infinity,
               height: 50,
               child: ElevatedButton.icon(
-                onPressed: _reportar,
-                icon: const Icon(Icons.send_rounded),
-                label: const Text('Reportar al administrador'),
+                onPressed: _enviando ? null : _reportar,
+                icon: _enviando
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Icon(Icons.send_rounded),
+                label: Text(_enviando ? 'Enviando...' : 'Reportar al administrador'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,

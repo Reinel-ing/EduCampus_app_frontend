@@ -14,13 +14,17 @@ class ClasesFinalizadasScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final service = ClasesService();
+    service.cargarDesdeBackendSiHaceFalta();
     return ListenableBuilder(
       listenable: service,
       builder: (context, _) {
         final clases = service.clases;
         if (clases.isEmpty) {
-          return const Center(
-            child: Text('Sin clases registradas', style: TextStyle(color: AppColors.textSecondary)),
+          return Center(
+            child: Text(
+              service.cargando ? 'Cargando...' : 'Sin clases registradas',
+              style: const TextStyle(color: AppColors.textSecondary),
+            ),
           );
         }
         return ListView.separated(

@@ -18,6 +18,9 @@ class ConvivenciaDocenteScreen extends StatelessWidget {
     final estudiantesService = StudentService();
     final convivenciaService = ConvivenciaService();
 
+    estudiantesService.cargarDesdeBackendSiHaceFalta();
+    convivenciaService.cargarDesdeBackendSiHaceFalta();
+
     return ListenableBuilder(
       listenable: Listenable.merge([estudiantesService, convivenciaService]),
       builder: (context, _) {
@@ -123,13 +126,19 @@ class _ConvivenciaEstudianteScreen extends StatelessWidget {
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
           ElevatedButton(
-            onPressed: () {
-              ConvivenciaService().marcarSeguimiento(
+            onPressed: () async {
+              final navigator = Navigator.of(context);
+              final messenger = ScaffoldMessenger.of(context);
+              final error = await ConvivenciaService().marcarSeguimiento(
                 situacion.id,
                 realizado: true,
                 nota: controller.text.trim(),
               );
-              Navigator.pop(context);
+              if (error != null) {
+                messenger.showSnackBar(SnackBar(content: Text(error)));
+                return;
+              }
+              navigator.pop();
             },
             child: const Text('Guardar'),
           ),
@@ -310,15 +319,27 @@ class _FormularioSituacionState extends State<_FormularioSituacion> {
     super.dispose();
   }
 
-  void _guardar() {
+  bool _guardando = false;
+
+  Future<void> _guardar() async {
     if (!_formKey.currentState!.validate()) return;
 
-    ConvivenciaService().agregar(
+    setState(() => _guardando = true);
+
+    final error = await ConvivenciaService().agregar(
       estudianteId: widget.estudiante.id,
       tipo: _tipo,
       titulo: _tituloController.text.trim(),
       descripcion: _descripcionController.text.trim(),
     );
+
+    if (!mounted) return;
+
+    if (error != null) {
+      setState(() => _guardando = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      return;
+    }
 
     Navigator.of(context).pop();
   }
@@ -394,14 +415,20 @@ class _FormularioSituacionState extends State<_FormularioSituacion> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _guardar,
+                    onPressed: _guardando ? null : _guardar,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
-                    child: const Text('Guardar situación'),
+                    child: _guardando
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Text('Guardar situación'),
                   ),
                 ),
               ],

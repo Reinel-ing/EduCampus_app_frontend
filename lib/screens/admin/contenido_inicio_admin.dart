@@ -26,6 +26,10 @@ class AdminHomeContent extends StatelessWidget {
     final acudientesService = AcudientesService();
     final gradoService = GradoService();
 
+    studentService.cargarDesdeBackendSiHaceFalta();
+    alertasService.cargarDesdeBackendSiHaceFalta();
+    clasesService.cargarDesdeBackendSiHaceFalta();
+
     return ListenableBuilder(
       listenable: Listenable.merge([
         studentService,
