@@ -1,8 +1,9 @@
+// ignore_for_file: avoid_web_libraries_in_flutter
 import 'dart:convert';
+import 'dart:html' as html;
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme/colores_app.dart';
 import '../../models/estudiante.dart';
@@ -272,23 +273,37 @@ class _EvaluacionEstudianteScreen extends StatelessWidget {
       queryParameters: {'periodo': periodo},
     );
 
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Generando boletín...'), duration: Duration(seconds: 2)),
+    );
+
+    String? error;
+
     try {
-      final respuesta = await http.head(uri).timeout(const Duration(seconds: 20));
-      if (respuesta.statusCode == 400 && context.mounted) {
-        String detalle = 'No se puede generar el boletín de este periodo.';
-        try {
-          final respuestaGet = await http.get(uri).timeout(const Duration(seconds: 20));
-          final datos = jsonDecode(utf8.decode(respuestaGet.bodyBytes));
-          if (datos['detail'] is String) detalle = datos['detail'];
-        } catch (_) {}
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(detalle)));
-        }
+      final respuesta = await http.get(uri).timeout(const Duration(seconds: 45));
+
+      if (respuesta.statusCode == 200) {
+        final blob = html.Blob([respuesta.bodyBytes], 'application/pdf');
+        final url = html.Url.createObjectUrlFromBlob(blob);
+        html.AnchorElement(href: url)
+          ..setAttribute('download', 'boletin_${estudiante.nombreCompleto.replaceAll(' ', '_')}_$periodo.pdf')
+          ..click();
+        html.Url.revokeObjectUrl(url);
         return;
       }
-    } catch (_) {}
 
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
+      error = 'No se puede generar el boletín de este periodo.';
+      try {
+        final datos = jsonDecode(utf8.decode(respuesta.bodyBytes));
+        if (datos['detail'] is String) error = datos['detail'];
+      } catch (_) {}
+    } catch (_) {
+      error = 'No fue posible conectar con el servidor.';
+    }
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error!)));
+    }
   }
 
   Future<void> _editarObservacion(BuildContext context, String periodo) async {
