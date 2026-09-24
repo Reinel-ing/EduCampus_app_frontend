@@ -46,7 +46,7 @@ class AcudienteDashboard extends StatelessWidget {
         ),
         NavSection(
           items: [
-            NavItem(label: 'Comunicados', icon: Icons.campaign_rounded, screenBuilder: (_) => const NotificacionesScreen(rol: RolNotificacion.acudiente)),
+            NavItem(label: 'Notificaciones', icon: Icons.notifications_rounded, screenBuilder: (_) => const NotificacionesScreen(rol: RolNotificacion.acudiente)),
           ],
         ),
       ],
