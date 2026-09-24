@@ -366,14 +366,6 @@ class _EvaluacionEstudianteScreen extends StatelessWidget {
         elevation: 0,
         foregroundColor: AppColors.textPrimary,
         title: Text(estudiante.nombreCompleto),
-        actions: [
-          if (!_esDocente)
-            IconButton(
-              tooltip: 'Descargar boletín',
-              icon: const Icon(Icons.picture_as_pdf_rounded, color: AppColors.danger),
-              onPressed: () => _descargarBoletin(context),
-            ),
-        ],
       ),
       body: Column(
         children: [
@@ -519,7 +511,13 @@ class _EvaluacionEstudianteScreen extends StatelessWidget {
               icon: const Icon(Icons.add),
               label: const Text('Agregar registro'),
             )
-          : null,
+          : FloatingActionButton.extended(
+              onPressed: () => _descargarBoletin(context),
+              icon: const Icon(Icons.picture_as_pdf_rounded),
+              label: const Text('Descargar boletín'),
+              backgroundColor: AppColors.danger,
+              foregroundColor: Colors.white,
+            ),
     );
   }
 }
