@@ -40,6 +40,30 @@ class NotificacionBackend {
   }
 }
 
+class AvisoRecogidaResultado {
+  final int acudientesNotificados;
+  final List<AvisoWhatsapp> whatsapp;
+
+  const AvisoRecogidaResultado({
+    required this.acudientesNotificados,
+    required this.whatsapp,
+  });
+}
+
+class AvisoWhatsapp {
+  final String telefono;
+  final String mensaje;
+
+  const AvisoWhatsapp({required this.telefono, required this.mensaje});
+
+  factory AvisoWhatsapp.fromJson(Map<String, dynamic> json) {
+    return AvisoWhatsapp(
+      telefono: json['telefono'] as String,
+      mensaje: json['mensaje'] as String,
+    );
+  }
+}
+
 class NotificacionesBackendService {
   Future<List<NotificacionBackend>> obtenerParaAcudiente(int acudienteId) async {
     final uri = Uri.parse('${ApiConfig.baseUrl}/notificaciones/$acudienteId/');
@@ -60,7 +84,7 @@ class NotificacionesBackendService {
     await http.post(uri).timeout(const Duration(seconds: 45));
   }
 
-  Future<int> avisarRecogida(int courseId) async {
+  Future<AvisoRecogidaResultado> avisarRecogida(int courseId) async {
     final sesion = AuthService().sesionActual;
 
     if (sesion == null) {
@@ -87,7 +111,13 @@ class NotificacionesBackendService {
 
     if (respuesta.statusCode == 200) {
       final datos = jsonDecode(utf8.decode(respuesta.bodyBytes));
-      return datos['acudientes_notificados'] as int;
+      final whatsapp = (datos['whatsapp'] as List? ?? [])
+          .map((w) => AvisoWhatsapp.fromJson(w as Map<String, dynamic>))
+          .toList();
+      return AvisoRecogidaResultado(
+        acudientesNotificados: datos['acudientes_notificados'] as int,
+        whatsapp: whatsapp,
+      );
     }
 
     throw AuthException(_extraerError(respuesta));
