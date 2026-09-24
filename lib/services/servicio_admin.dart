@@ -142,6 +142,30 @@ class AdminService {
     throw AuthException(_extraerMensajeError(respuesta));
   }
 
+  /// Devuelve la contraseña actual de la cuenta si el backend puede
+  /// descifrarla (se creó o se restableció después de activar esta
+  /// función), o null si no hay una copia recuperable.
+  Future<String?> consultarPassword(String correo) async {
+    final sesion = AuthService().sesionActual;
+    if (sesion == null) return null;
+
+    final uri = Uri.parse('${ApiConfig.baseUrl}/auth/consultar-password/').replace(
+      queryParameters: {
+        'correo': correo.trim().toLowerCase(),
+        'access_token': sesion.accessToken,
+      },
+    );
+
+    try {
+      final respuesta = await http.get(uri).timeout(const Duration(seconds: 45));
+      if (respuesta.statusCode != 200) return null;
+      final datos = jsonDecode(utf8.decode(respuesta.bodyBytes));
+      return datos['password'] as String?;
+    } catch (_) {
+      return null;
+    }
+  }
+
   String _extraerMensajeError(http.Response respuesta) {
     try {
       final datos = jsonDecode(utf8.decode(respuesta.bodyBytes));
