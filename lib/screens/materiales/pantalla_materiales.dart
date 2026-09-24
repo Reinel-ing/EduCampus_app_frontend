@@ -20,10 +20,38 @@ void _descargarArchivo(String nombre, Uint8List bytes) {
   html.Url.revokeObjectUrl(url);
 }
 
-class MaterialesScreen extends StatelessWidget {
+class MaterialesScreen extends StatefulWidget {
   const MaterialesScreen({super.key});
 
-  void _abrirFormulario(BuildContext context) {
+  @override
+  State<MaterialesScreen> createState() => _MaterialesScreenState();
+}
+
+class _MaterialesScreenState extends State<MaterialesScreen> {
+  @override
+  void initState() {
+    super.initState();
+    if (GradoService().grados.isEmpty) {
+      GradoService().cargarDesdeBackend();
+    }
+  }
+
+  Future<void> _abrirFormulario(BuildContext context) async {
+    if (GradoService().grados.isEmpty) {
+      await GradoService().cargarDesdeBackend();
+    }
+
+    if (!context.mounted) return;
+
+    if (GradoService().grados.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No fue posible cargar los grados. Intenta de nuevo.'),
+        ),
+      );
+      return;
+    }
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -211,7 +239,9 @@ class _FormularioMaterialState extends State<_FormularioMaterial> {
   final _descC = TextEditingController();
   final _materiaC = TextEditingController();
   final _enlaceC = TextEditingController();
-  late String _grado = GradoService().grados.first;
+  late String _grado = GradoService().grados.isNotEmpty
+      ? GradoService().grados.first
+      : '';
   String? _archivoNombre;
   Uint8List? _archivoBytes;
 

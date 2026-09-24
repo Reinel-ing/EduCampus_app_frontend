@@ -16,7 +16,30 @@ class _HorarioAdminScreenState extends State<HorarioAdminScreen> with SingleTick
   final _service = AcademicService();
   String? _gradoFiltro;
 
+  @override
+  void initState() {
+    super.initState();
+    if (GradoService().grados.isEmpty) {
+      GradoService().cargarDesdeBackend();
+    }
+  }
+
   void _abrirFormularioMateria() async {
+    if (GradoService().grados.isEmpty) {
+      await GradoService().cargarDesdeBackend();
+    }
+
+    if (!mounted) return;
+
+    if (GradoService().grados.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Primero debes crear al menos un grado.'),
+        ),
+      );
+      return;
+    }
+
     final nombreCtrl = TextEditingController();
     final docenteCtrl = TextEditingController();
     String grado = GradoService().grados.first;
@@ -102,7 +125,7 @@ class _HorarioAdminScreenState extends State<HorarioAdminScreen> with SingleTick
     return DefaultTabController(
       length: 2,
       child: ListenableBuilder(
-        listenable: _service,
+        listenable: Listenable.merge([_service, GradoService()]),
         builder: (context, _) {
           final materiasFiltradas = _gradoFiltro == null
               ? _service.materias
