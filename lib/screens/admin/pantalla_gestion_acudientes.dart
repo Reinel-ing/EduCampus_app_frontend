@@ -4,6 +4,7 @@ import '../../models/acudiente_cuenta.dart';
 import '../../services/servicio_acudientes.dart';
 import '../../services/servicio_admin.dart';
 import '../../services/servicio_auth.dart';
+import '../../services/servicio_contrasenas_cache.dart';
 import '../../services/servicio_estudiantes.dart';
 import '../../widgets/contrasena_copiable.dart';
 
@@ -73,8 +74,18 @@ class _GestionAcudientesScreenState extends State<GestionAcudientesScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('${c.correo} · ${c.estudianteIds.length} estudiante(s)'),
-                        ContrasenaEnLista(contrasena: c.contrasena),
+                        Builder(builder: (context) {
+                          final vinculados = StudentService()
+                              .students
+                              .where((s) => s.acudienteCorreo.trim().toLowerCase() == c.correo.trim().toLowerCase())
+                              .length;
+                          return Text('${c.correo} · $vinculados estudiante(s)');
+                        }),
+                        ContrasenaEnLista(
+                          contrasena: c.contrasena.isNotEmpty
+                              ? c.contrasena
+                              : (ContrasenasCache.obtener(c.correo) ?? ''),
+                        ),
                       ],
                     ),
                     trailing: const Icon(Icons.chevron_right_rounded),
@@ -176,6 +187,7 @@ class _FormularioAcudienteState extends State<_FormularioAcudiente> {
       );
 
       service.agregarExistente(nueva);
+      ContrasenasCache.guardar(nueva.correo, contrasena);
 
       if (!mounted) return;
 
@@ -237,6 +249,7 @@ class _FormularioAcudienteState extends State<_FormularioAcudiente> {
 
       cuenta.contrasena = nuevaContrasena;
       AcudientesService().actualizar(cuenta);
+      ContrasenasCache.guardar(cuenta.correo, nuevaContrasena);
 
       if (!mounted) return;
       setState(() => _isLoading = false);
@@ -302,11 +315,24 @@ class _FormularioAcudienteState extends State<_FormularioAcudiente> {
               _campo(_nombreCtrl, 'Nombre completo', Icons.person_outline_rounded),
               const SizedBox(height: 14),
               _campo(_correoCtrl, 'Correo (@gmail.com)', Icons.email_outlined, keyboardType: TextInputType.emailAddress),
-              if (!isNew && widget.cuenta!.contrasena.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                const Text('Contraseña',
-                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                ContrasenaEnLista(contrasena: widget.cuenta!.contrasena),
+              if (!isNew) ...[
+                Builder(builder: (context) {
+                  final cuenta = widget.cuenta!;
+                  final contrasena = cuenta.contrasena.isNotEmpty
+                      ? cuenta.contrasena
+                      : (ContrasenasCache.obtener(cuenta.correo) ?? '');
+                  if (contrasena.isEmpty) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Contraseña', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                        ContrasenaEnLista(contrasena: contrasena),
+                      ],
+                    ),
+                  );
+                }),
               ],
               const SizedBox(height: 14),
               _campo(_telefonoCtrl, 'Teléfono', Icons.phone_outlined, keyboardType: TextInputType.phone),

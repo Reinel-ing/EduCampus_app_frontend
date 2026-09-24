@@ -3,6 +3,7 @@ import '../../core/theme/colores_app.dart';
 import '../../models/docente.dart';
 import '../../services/servicio_admin.dart';
 import '../../services/servicio_auth.dart';
+import '../../services/servicio_contrasenas_cache.dart';
 import '../../services/servicio_docentes.dart';
 import '../../widgets/contrasena_copiable.dart';
 
@@ -72,7 +73,11 @@ class _GestionDocentesScreenState extends State<GestionDocentesScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text('${d.especialidad} · ${d.correo}'),
-                        ContrasenaEnLista(contrasena: d.contrasena),
+                        ContrasenaEnLista(
+                          contrasena: d.contrasena.isNotEmpty
+                              ? d.contrasena
+                              : (ContrasenasCache.obtener(d.correo) ?? ''),
+                        ),
                       ],
                     ),
                     trailing: const Icon(Icons.chevron_right_rounded),
@@ -189,6 +194,7 @@ class _FormularioDocenteState extends State<_FormularioDocente> {
       );
 
       service.addTeacher(teacher);
+      ContrasenasCache.guardar(teacher.correo, contrasena);
 
       if (!mounted) return;
 
@@ -250,6 +256,7 @@ class _FormularioDocenteState extends State<_FormularioDocente> {
 
       docente.contrasena = nuevaContrasena;
       TeacherService().updateTeacher(docente);
+      ContrasenasCache.guardar(docente.correo, nuevaContrasena);
 
       if (!mounted) return;
       setState(() => _isLoading = false);
@@ -315,6 +322,25 @@ class _FormularioDocenteState extends State<_FormularioDocente> {
               _campo(_telefonoCtrl, 'Teléfono', Icons.phone_outlined, keyboardType: TextInputType.phone),
               const SizedBox(height: 14),
               _campo(_correoCtrl, 'Correo (@gmail.com)', Icons.email_outlined, keyboardType: TextInputType.emailAddress),
+              if (!isNew) ...[
+                Builder(builder: (context) {
+                  final docente = widget.docente!;
+                  final contrasena = docente.contrasena.isNotEmpty
+                      ? docente.contrasena
+                      : (ContrasenasCache.obtener(docente.correo) ?? '');
+                  if (contrasena.isEmpty) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Contraseña', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                        ContrasenaEnLista(contrasena: contrasena),
+                      ],
+                    ),
+                  );
+                }),
+              ],
               if (_errorMensaje != null) ...[
                 const SizedBox(height: 14),
                 Container(
