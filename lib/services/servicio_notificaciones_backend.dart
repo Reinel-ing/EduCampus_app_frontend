@@ -44,7 +44,7 @@ class NotificacionesBackendService {
   Future<List<NotificacionBackend>> obtenerParaAcudiente(int acudienteId) async {
     final uri = Uri.parse('${ApiConfig.baseUrl}/notificaciones/$acudienteId/');
 
-    final respuesta = await http.get(uri).timeout(const Duration(seconds: 10));
+    final respuesta = await http.get(uri).timeout(const Duration(seconds: 45));
 
     if (respuesta.statusCode != 200) return [];
 
@@ -57,7 +57,7 @@ class NotificacionesBackendService {
 
   Future<void> marcarLeida(int notificacionId) async {
     final uri = Uri.parse('${ApiConfig.baseUrl}/notificaciones/$notificacionId/marcar-leida/');
-    await http.post(uri).timeout(const Duration(seconds: 10));
+    await http.post(uri).timeout(const Duration(seconds: 45));
   }
 
   Future<int> avisarRecogida(int courseId) async {
@@ -80,7 +80,7 @@ class NotificacionesBackendService {
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({'course_id': courseId}),
           )
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 45));
     } catch (_) {
       throw const AuthException('No fue posible conectar con el servidor.');
     }
@@ -113,7 +113,7 @@ class NotificacionesBackendService {
               'severidad': severidad,
             }),
           )
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 45));
     } catch (_) {
       throw const AuthException('No fue posible conectar con el servidor.');
     }

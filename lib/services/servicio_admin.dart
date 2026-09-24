@@ -82,7 +82,7 @@ class AdminService {
               if (acudienteId != null) 'acudiente_id': acudienteId,
             }),
           )
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 45));
     } catch (_) {
       throw const AuthException(
         'No fue posible conectar con el servidor. Verifica tu conexión.',
@@ -130,7 +130,7 @@ class AdminService {
               'password': password,
             }),
           )
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 45));
     } catch (_) {
       throw const AuthException(
         'No fue posible conectar con el servidor. Verifica tu conexión.',

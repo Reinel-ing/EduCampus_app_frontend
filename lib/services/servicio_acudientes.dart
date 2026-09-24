@@ -24,7 +24,7 @@ class AcudientesService extends ChangeNotifier {
 
     try {
       final uri = Uri.parse('${ApiConfig.baseUrl}/acudientes/');
-      final respuesta = await http.get(uri).timeout(const Duration(seconds: 10));
+      final respuesta = await http.get(uri).timeout(const Duration(seconds: 45));
 
       if (respuesta.statusCode == 200) {
         final datos = jsonDecode(utf8.decode(respuesta.bodyBytes)) as List;

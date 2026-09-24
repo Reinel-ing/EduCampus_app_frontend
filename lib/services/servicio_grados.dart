@@ -25,7 +25,7 @@ class GradoService extends ChangeNotifier {
 
     try {
       final uri = Uri.parse('${ApiConfig.baseUrl}/grados/');
-      final respuesta = await http.get(uri).timeout(const Duration(seconds: 10));
+      final respuesta = await http.get(uri).timeout(const Duration(seconds: 45));
 
       if (respuesta.statusCode == 200) {
         final datos = jsonDecode(utf8.decode(respuesta.bodyBytes)) as List;
@@ -59,7 +59,7 @@ class GradoService extends ChangeNotifier {
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({'nombre': valor}),
           )
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 45));
 
       if (respuesta.statusCode == 201) {
         final datos = jsonDecode(utf8.decode(respuesta.bodyBytes));
@@ -88,7 +88,7 @@ class GradoService extends ChangeNotifier {
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({'nombre': valor}),
           )
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 45));
 
       if (respuesta.statusCode == 200) {
         final index = _grados.indexOf(actual);
@@ -111,7 +111,7 @@ class GradoService extends ChangeNotifier {
 
     try {
       final uri = Uri.parse('${ApiConfig.baseUrl}/grados/$id');
-      final respuesta = await http.delete(uri).timeout(const Duration(seconds: 10));
+      final respuesta = await http.delete(uri).timeout(const Duration(seconds: 45));
 
       if (respuesta.statusCode == 204) {
         _grados.remove(nombre);
