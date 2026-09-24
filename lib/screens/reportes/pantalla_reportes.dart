@@ -5,7 +5,6 @@ import '../../services/servicio_docentes.dart';
 import '../../services/servicio_evaluacion.dart';
 import '../../services/servicio_convivencia.dart';
 import '../../services/servicio_asistencia.dart';
-import '../../models/registro_academico.dart';
 import '../../models/situacion_convivencia.dart';
 
 class ReportesScreen extends StatelessWidget {
@@ -65,10 +64,7 @@ class ReportesScreen extends StatelessWidget {
         final registros = evaluacionService.registros;
         final situaciones = convivenciaService.situaciones;
 
-        final notas = registros
-            .where((r) => r.tipo == TipoRegistroAcademico.nota && r.calificacion != null)
-            .map((r) => r.calificacion!)
-            .toList();
+        final notas = registros.map((r) => r.score).toList();
         final promedioGeneral = notas.isEmpty ? null : notas.reduce((a, b) => a + b) / notas.length;
 
         final positivas = situaciones.where((s) => s.tipo == TipoSituacion.positiva).length;
