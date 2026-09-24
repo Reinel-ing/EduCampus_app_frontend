@@ -19,6 +19,7 @@ class _GestionAcudientesScreenState extends State<GestionAcudientesScreen> {
   void initState() {
     super.initState();
     AcudientesService().cargarDesdeBackend();
+    StudentService().cargarDesdeBackendSiHaceFalta();
   }
 
   void _abrirFormulario(BuildContext context, {AcudienteCuenta? cuenta}) {
@@ -277,6 +278,13 @@ class _FormularioAcudienteState extends State<_FormularioAcudiente> {
 
   @override
   Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: StudentService(),
+      builder: (context, _) => _build(context),
+    );
+  }
+
+  Widget _build(BuildContext context) {
     final isNew = widget.cuenta == null;
     final students = StudentService().students;
     return Padding(
@@ -294,6 +302,12 @@ class _FormularioAcudienteState extends State<_FormularioAcudiente> {
               _campo(_nombreCtrl, 'Nombre completo', Icons.person_outline_rounded),
               const SizedBox(height: 14),
               _campo(_correoCtrl, 'Correo (@gmail.com)', Icons.email_outlined, keyboardType: TextInputType.emailAddress),
+              if (!isNew && widget.cuenta!.contrasena.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                const Text('Contraseña',
+                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                ContrasenaEnLista(contrasena: widget.cuenta!.contrasena),
+              ],
               const SizedBox(height: 14),
               _campo(_telefonoCtrl, 'Teléfono', Icons.phone_outlined, keyboardType: TextInputType.phone),
               if (_errorMensaje != null) ...[
@@ -318,26 +332,38 @@ class _FormularioAcudienteState extends State<_FormularioAcudiente> {
                   ),
                 ),
               ],
-              if (students.isNotEmpty) ...[
+              if (!isNew) ...[
                 const SizedBox(height: 20),
                 const Text('Estudiantes vinculados',
                     style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                const SizedBox(height: 4),
+                Text(
+                  'Se vinculan desde el registro del estudiante, no aquí.',
+                  style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+                ),
                 const SizedBox(height: 10),
-                ...students.map((s) => CheckboxListTile(
-                  dense: true,
-                  title: Text(s.nombreCompleto),
-                  subtitle: Text(s.grado),
-                  value: _estudianteIds.contains(s.id),
-                  onChanged: (checked) {
-                    setState(() {
-                      if (checked == true) {
-                        _estudianteIds.add(s.id);
-                      } else {
-                        _estudianteIds.remove(s.id);
-                      }
-                    });
-                  },
-                )),
+                Builder(builder: (context) {
+                  final vinculados = students
+                      .where((s) => s.acudienteCorreo.trim().toLowerCase() == widget.cuenta!.correo.trim().toLowerCase())
+                      .toList();
+
+                  if (vinculados.isEmpty) {
+                    return const Text('Ningún estudiante vinculado todavía.',
+                        style: TextStyle(fontSize: 13, color: AppColors.textSecondary));
+                  }
+
+                  return Column(
+                    children: vinculados
+                        .map((s) => ListTile(
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                              leading: const Icon(Icons.person_rounded, size: 20, color: AppColors.primary),
+                              title: Text(s.nombreCompleto),
+                              subtitle: Text(s.grado),
+                            ))
+                        .toList(),
+                  );
+                }),
               ],
               if (!isNew) ...[
                 const SizedBox(height: 14),
