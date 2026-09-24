@@ -51,28 +51,36 @@ class _ReportesScreenState extends State<ReportesScreen> {
 
   Widget _tarjeta({required String titulo, required String valor, required IconData icono, required Color color}) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFE7E7EC)),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            width: 46,
-            height: 46,
+            width: 40,
+            height: 40,
             alignment: Alignment.center,
             decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(12)),
-            child: Icon(icono, color: color),
+            child: Icon(icono, color: color, size: 20),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(valor, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: AppColors.textPrimary)),
-                Text(titulo, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12.5)),
+                Text(valor,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.textPrimary),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
+                Text(titulo,
+                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 11.5),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis),
               ],
             ),
           ),
@@ -107,16 +115,18 @@ class _ReportesScreenState extends State<ReportesScreen> {
         final positivas = situaciones.where((s) => s.tipo == TipoSituacion.positiva).length;
         final negativas = situaciones.where((s) => s.tipo == TipoSituacion.negativa).length;
 
+        final anchoPantalla = MediaQuery.of(context).size.width;
+
         return ListView(
           padding: const EdgeInsets.all(20),
           children: [
             GridView.count(
-              crossAxisCount: MediaQuery.of(context).size.width >= 900 ? 3 : 2,
+              crossAxisCount: anchoPantalla >= 900 ? 3 : 2,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               mainAxisSpacing: 12,
               crossAxisSpacing: 12,
-              childAspectRatio: 2.4,
+              childAspectRatio: anchoPantalla >= 900 ? 2.4 : (anchoPantalla >= 400 ? 1.9 : 1.5),
               children: [
                 _tarjeta(titulo: 'Estudiantes', valor: '${estudiantes.length}', icono: Icons.groups_2_rounded, color: AppColors.primary),
                 _tarjeta(titulo: 'Docentes', valor: '${docentes.length}', icono: Icons.badge_rounded, color: AppColors.accent),
