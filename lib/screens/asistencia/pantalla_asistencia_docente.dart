@@ -71,6 +71,11 @@ class _AsistenciaDocenteScreenState extends State<AsistenciaDocenteScreen> {
     return '${f.day} de ${meses[f.month - 1]} de ${f.year}';
   }
 
+  bool get _esHoy {
+    final hoy = DateTime.now();
+    return _fecha.year == hoy.year && _fecha.month == hoy.month && _fecha.day == hoy.day;
+  }
+
   Future<void> _cargarCursos() async {
     final sesion = AuthService().sesionActual;
     if (sesion == null) {
@@ -173,10 +178,12 @@ class _AsistenciaDocenteScreenState extends State<AsistenciaDocenteScreen> {
                   Text(_formatearFecha(_fecha), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                   IconButton(
                     icon: const Icon(Icons.chevron_right_rounded),
-                    onPressed: () {
-                      setState(() => _fecha = _fecha.add(const Duration(days: 1)));
-                      _cargarEstudiantesYAsistencia();
-                    },
+                    onPressed: _esHoy
+                        ? null
+                        : () {
+                            setState(() => _fecha = _fecha.add(const Duration(days: 1)));
+                            _cargarEstudiantesYAsistencia();
+                          },
                   ),
                 ],
               ),

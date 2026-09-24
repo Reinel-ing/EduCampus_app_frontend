@@ -88,7 +88,12 @@ class _AsistenciaAcudienteScreenState extends State<AsistenciaAcudienteScreen> {
       _registros = [];
       return;
     }
-    _registros = await AsistenciaBackendService().listarPorEstudiante(id);
+    final hoy = DateTime.now();
+    final registros = await AsistenciaBackendService().listarPorEstudiante(id);
+    _registros = registros.where((r) {
+      final fecha = DateTime.tryParse(r.fecha);
+      return fecha == null || !fecha.isAfter(DateTime(hoy.year, hoy.month, hoy.day));
+    }).toList();
   }
 
   String _formatearFecha(String isoFecha) {
