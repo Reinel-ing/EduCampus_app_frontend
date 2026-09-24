@@ -168,8 +168,8 @@ class AcudienteHomeContent extends StatelessWidget {
               ),
               const SizedBox(height: 12),
 
-              GridView.count(
-                crossAxisCount: 3,
+              GridView.extent(
+                maxCrossAxisExtent: 160,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 crossAxisSpacing: 10,
