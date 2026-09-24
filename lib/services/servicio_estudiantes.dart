@@ -26,9 +26,9 @@ class StudentService extends ChangeNotifier {
 
     try {
       final respuestas = await Future.wait([
-        http.get(Uri.parse('${ApiConfig.baseUrl}/grados/')).timeout(const Duration(seconds: 10)),
-        http.get(Uri.parse('${ApiConfig.baseUrl}/acudientes/')).timeout(const Duration(seconds: 10)),
-        http.get(Uri.parse('${ApiConfig.baseUrl}/estudiantes/')).timeout(const Duration(seconds: 10)),
+        http.get(Uri.parse('${ApiConfig.baseUrl}/grados/')).timeout(const Duration(seconds: 45)),
+        http.get(Uri.parse('${ApiConfig.baseUrl}/acudientes/')).timeout(const Duration(seconds: 45)),
+        http.get(Uri.parse('${ApiConfig.baseUrl}/estudiantes/')).timeout(const Duration(seconds: 45)),
       ]);
 
       if (respuestas.every((r) => r.statusCode == 200)) {
