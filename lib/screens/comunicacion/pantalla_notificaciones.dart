@@ -19,16 +19,38 @@ class _NotificacionesScreenState extends State<NotificacionesScreen> {
   List<NotificacionBackend> _notificacionesReales = [];
   bool _cargando = false;
 
+  bool get _esRolConectado =>
+      widget.rol == RolNotificacion.acudiente || widget.rol == RolNotificacion.docente;
+
   @override
   void initState() {
     super.initState();
-    if (widget.rol == RolNotificacion.acudiente) {
+    if (_esRolConectado) {
       _cargarNotificacionesReales();
     }
   }
 
   Future<void> _cargarNotificacionesReales() async {
     setState(() => _cargando = true);
+
+    if (widget.rol == RolNotificacion.docente) {
+      final profesorId = AuthService().sesionActual?.usuarioId;
+
+      if (profesorId == null) {
+        if (mounted) setState(() => _cargando = false);
+        return;
+      }
+
+      final notificaciones = await NotificacionesBackendService().obtenerParaDocente(profesorId);
+
+      if (!mounted) return;
+
+      setState(() {
+        _notificacionesReales = notificaciones;
+        _cargando = false;
+      });
+      return;
+    }
 
     if (AcudientesService().cuentas.isEmpty) {
       await AcudientesService().cargarDesdeBackend();
@@ -70,6 +92,7 @@ class _NotificacionesScreenState extends State<NotificacionesScreen> {
     if (tipo == 'recogida' || titulo.toLowerCase().contains('recoger')) {
       return Icons.directions_walk_rounded;
     }
+    if (tipo == 'entrega') return Icons.assignment_turned_in_rounded;
     if (tipo == 'alerta') return Icons.warning_amber_rounded;
     return Icons.campaign_rounded;
   }
@@ -82,7 +105,7 @@ class _NotificacionesScreenState extends State<NotificacionesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.rol == RolNotificacion.acudiente) {
+    if (_esRolConectado) {
       return _construirListaReal();
     }
     return _construirListaLocal();

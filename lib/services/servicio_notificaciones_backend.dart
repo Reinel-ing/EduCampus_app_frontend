@@ -7,7 +7,8 @@ import 'servicio_auth.dart';
 
 class NotificacionBackend {
   final int id;
-  final int acudienteId;
+  final int? acudienteId;
+  final int? profesorId;
   final int? estudianteId;
   final String titulo;
   final String mensaje;
@@ -18,6 +19,7 @@ class NotificacionBackend {
   const NotificacionBackend({
     required this.id,
     required this.acudienteId,
+    required this.profesorId,
     required this.estudianteId,
     required this.titulo,
     required this.mensaje,
@@ -29,7 +31,8 @@ class NotificacionBackend {
   factory NotificacionBackend.fromJson(Map<String, dynamic> json) {
     return NotificacionBackend(
       id: json['id'] as int,
-      acudienteId: json['acudiente_id'] as int,
+      acudienteId: json['acudiente_id'] as int?,
+      profesorId: json['profesor_id'] as int?,
       estudianteId: json['estudiante_id'] as int?,
       titulo: json['titulo'] as String,
       mensaje: json['mensaje'] as String,
@@ -67,6 +70,20 @@ class AvisoWhatsapp {
 class NotificacionesBackendService {
   Future<List<NotificacionBackend>> obtenerParaAcudiente(int acudienteId) async {
     final uri = Uri.parse('${ApiConfig.baseUrl}/notificaciones/$acudienteId/');
+
+    final respuesta = await http.get(uri).timeout(const Duration(seconds: 45));
+
+    if (respuesta.statusCode != 200) return [];
+
+    final datos = jsonDecode(utf8.decode(respuesta.bodyBytes)) as List;
+
+    return datos
+        .map((d) => NotificacionBackend.fromJson(d as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<List<NotificacionBackend>> obtenerParaDocente(int profesorId) async {
+    final uri = Uri.parse('${ApiConfig.baseUrl}/notificaciones/docente/$profesorId/');
 
     final respuesta = await http.get(uri).timeout(const Duration(seconds: 45));
 
