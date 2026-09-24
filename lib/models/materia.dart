@@ -5,6 +5,7 @@ class Materia {
   String nombre;
   String grado;
   String docenteNombre;
+  int? instructorId;
   Color color;
 
   Materia({
@@ -12,6 +13,7 @@ class Materia {
     required this.nombre,
     required this.grado,
     required this.docenteNombre,
+    this.instructorId,
     required this.color,
   });
 }

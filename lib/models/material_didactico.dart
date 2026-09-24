@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 class MaterialDidactico {
   final String id;
+  final int cursoId;
   String titulo;
   String descripcion;
   String grado;
@@ -13,9 +14,10 @@ class MaterialDidactico {
 
   MaterialDidactico({
     required this.id,
+    required this.cursoId,
     required this.titulo,
     this.descripcion = '',
-    required this.grado,
+    this.grado = '',
     this.materia = '',
     this.enlace = '',
     DateTime? fecha,

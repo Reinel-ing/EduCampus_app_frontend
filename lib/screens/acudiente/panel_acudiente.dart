@@ -7,7 +7,7 @@ import 'contenido_inicio_acudiente.dart';
 import 'pantalla_actividades_acudiente.dart';
 import '../horario/horario_acudiente_screen.dart';
 import '../evaluacion/pantalla_evaluacion_docente.dart';
-import '../asistencia/pantalla_asistencia.dart';
+import '../asistencia/pantalla_asistencia_acudiente.dart';
 import '../materiales/pantalla_materiales.dart';
 import '../calendario/pantalla_calendario.dart';
 
@@ -38,7 +38,7 @@ class AcudienteDashboard extends StatelessWidget {
           items: [
             NavItem(label: 'Actividades y entregas', icon: Icons.assignment_rounded, screenBuilder: (_) => const ActividadesAcudienteScreen()),
             NavItem(label: 'Calificaciones y logros', icon: Icons.grade_rounded, screenBuilder: (_) => const EvaluacionDocenteScreen()),
-            NavItem(label: 'Asistencia', icon: Icons.event_available_rounded, screenBuilder: (_) => const AsistenciaScreen()),
+            NavItem(label: 'Asistencia', icon: Icons.event_available_rounded, screenBuilder: (_) => const AsistenciaAcudienteScreen()),
             NavItem(label: 'Materiales', icon: Icons.folder_rounded, screenBuilder: (_) => const MaterialesScreen()),
             NavItem(label: 'Horario', icon: Icons.schedule_rounded, screenBuilder: (_) => const HorarioAcudienteScreen()),
             NavItem(label: 'Calendario', icon: Icons.calendar_month_rounded, screenBuilder: (_) => const CalendarioScreen()),

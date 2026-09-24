@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/colores_app.dart';
 import '../../models/materia.dart';
-import '../../models/horario_entry.dart';
+import '../../models/docente.dart';
 import '../../services/academic_service.dart';
+import '../../services/servicio_docentes.dart';
 import '../../widgets/weekly_schedule_grid.dart';
 import '../../services/servicio_grados.dart';
+
 class HorarioAdminScreen extends StatefulWidget {
   const HorarioAdminScreen({super.key});
 
@@ -22,27 +24,40 @@ class _HorarioAdminScreenState extends State<HorarioAdminScreen> with SingleTick
     if (GradoService().grados.isEmpty) {
       GradoService().cargarDesdeBackend();
     }
+    if (TeacherService().teachers.isEmpty) {
+      TeacherService().cargarDesdeBackend();
+    }
+    _service.cargarDesdeBackend();
   }
 
   void _abrirFormularioMateria() async {
     if (GradoService().grados.isEmpty) {
       await GradoService().cargarDesdeBackend();
     }
+    if (TeacherService().teachers.isEmpty) {
+      await TeacherService().cargarDesdeBackend();
+    }
 
     if (!mounted) return;
 
     if (GradoService().grados.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Primero debes crear al menos un grado.'),
-        ),
+        const SnackBar(content: Text('Primero debes crear al menos un grado.')),
+      );
+      return;
+    }
+
+    if (TeacherService().teachers.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Primero debes registrar al menos un docente.')),
       );
       return;
     }
 
     final nombreCtrl = TextEditingController();
-    final docenteCtrl = TextEditingController();
     String grado = GradoService().grados.first;
+    Teacher docente = TeacherService().teachers.first;
+    bool guardando = false;
 
     await showDialog(
       context: context,
@@ -54,7 +69,15 @@ class _HorarioAdminScreenState extends State<HorarioAdminScreen> with SingleTick
             children: [
               TextField(controller: nombreCtrl, decoration: const InputDecoration(labelText: 'Nombre de la materia')),
               const SizedBox(height: 12),
-              TextField(controller: docenteCtrl, decoration: const InputDecoration(labelText: 'Docente asignado')),
+              DropdownButtonFormField<Teacher>(
+                initialValue: docente,
+                decoration: const InputDecoration(labelText: 'Docente asignado'),
+                items: TeacherService()
+                    .teachers
+                    .map((t) => DropdownMenuItem(value: t, child: Text(t.nombreCompleto)))
+                    .toList(),
+                onChanged: (v) => setDialogState(() => docente = v ?? docente),
+              ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: grado,
@@ -67,11 +90,28 @@ class _HorarioAdminScreenState extends State<HorarioAdminScreen> with SingleTick
           actions: [
             TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
             ElevatedButton(
-              onPressed: () {
-                if (nombreCtrl.text.trim().isEmpty || docenteCtrl.text.trim().isEmpty) return;
-                _service.addMateria(nombre: nombreCtrl.text.trim(), grado: grado, docenteNombre: docenteCtrl.text.trim());
-                Navigator.pop(context);
-              },
+              onPressed: guardando
+                  ? null
+                  : () async {
+                      if (nombreCtrl.text.trim().isEmpty) return;
+                      setDialogState(() => guardando = true);
+
+                      final error = await _service.agregarMateria(
+                        nombre: nombreCtrl.text.trim(),
+                        instructorId: int.parse(docente.id),
+                        gradoId: GradoService().idPorNombre(grado),
+                      );
+
+                      if (!context.mounted) return;
+
+                      if (error != null) {
+                        setDialogState(() => guardando = false);
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+                        return;
+                      }
+
+                      Navigator.pop(context);
+                    },
               child: const Text('Crear'),
             ),
           ],
@@ -84,6 +124,7 @@ class _HorarioAdminScreenState extends State<HorarioAdminScreen> with SingleTick
     String dia = diasSemana.first;
     final inicioCtrl = TextEditingController(text: '07:00');
     final finCtrl = TextEditingController(text: '08:00');
+    bool guardando = false;
 
     await showDialog(
       context: context,
@@ -108,16 +149,41 @@ class _HorarioAdminScreenState extends State<HorarioAdminScreen> with SingleTick
           actions: [
             TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
             ElevatedButton(
-              onPressed: () {
-                _service.addHorarioEntry(materiaId: materia.id, dia: dia, horaInicio: inicioCtrl.text.trim(), horaFin: finCtrl.text.trim());
-                Navigator.pop(context);
-              },
+              onPressed: guardando
+                  ? null
+                  : () async {
+                      setDialogState(() => guardando = true);
+
+                      final error = await _service.agregarHorarioEntry(
+                        materiaId: materia.id,
+                        dia: dia,
+                        horaInicio: inicioCtrl.text.trim(),
+                        horaFin: finCtrl.text.trim(),
+                      );
+
+                      if (!context.mounted) return;
+
+                      if (error != null) {
+                        setDialogState(() => guardando = false);
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+                        return;
+                      }
+
+                      Navigator.pop(context);
+                    },
               child: const Text('Agregar'),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _eliminarMateria(Materia m) async {
+    final error = await _service.eliminarMateria(m.id);
+    if (error != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+    }
   }
 
   @override
@@ -178,7 +244,9 @@ class _HorarioAdminScreenState extends State<HorarioAdminScreen> with SingleTick
                           ),
                         ),
                         Expanded(
-                          child: materiasFiltradas.isEmpty
+                          child: _service.cargando
+                              ? const Center(child: CircularProgressIndicator())
+                              : materiasFiltradas.isEmpty
                               ? const Center(child: Text('No hay materias registradas', style: TextStyle(color: AppColors.textSecondary)))
                               : ListView.separated(
                                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -199,7 +267,7 @@ class _HorarioAdminScreenState extends State<HorarioAdminScreen> with SingleTick
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
                                             IconButton(icon: const Icon(Icons.schedule, color: AppColors.primary), onPressed: () => _abrirFormularioHorario(m)),
-                                            IconButton(icon: const Icon(Icons.delete_outline, color: AppColors.danger), onPressed: () => _service.deleteMateria(m.id)),
+                                            IconButton(icon: const Icon(Icons.delete_outline, color: AppColors.danger), onPressed: () => _eliminarMateria(m)),
                                           ],
                                         ),
                                       ),

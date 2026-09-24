@@ -6,11 +6,13 @@ import 'api_config.dart';
 
 class AsistenciaEstudianteBackend {
   final int studentId;
+  final int courseId;
   final String status;
   final String fecha;
 
   const AsistenciaEstudianteBackend({
     required this.studentId,
+    required this.courseId,
     required this.status,
     required this.fecha,
   });
@@ -18,6 +20,7 @@ class AsistenciaEstudianteBackend {
   factory AsistenciaEstudianteBackend.fromJson(Map<String, dynamic> json) {
     return AsistenciaEstudianteBackend(
       studentId: json['student_id'] as int,
+      courseId: json['course_id'] as int,
       status: json['status'] as String,
       fecha: json['fecha'] as String,
     );
@@ -87,6 +90,22 @@ class AsistenciaBackendService {
         'course_id': courseId.toString(),
         'fecha': formatearFechaISO(fecha),
       },
+    );
+
+    final respuesta = await http.get(uri).timeout(const Duration(seconds: 45));
+
+    if (respuesta.statusCode != 200) return [];
+
+    final datos = jsonDecode(utf8.decode(respuesta.bodyBytes)) as List;
+
+    return datos
+        .map((d) => AsistenciaEstudianteBackend.fromJson(d as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<List<AsistenciaEstudianteBackend>> listarPorEstudiante(int studentId) async {
+    final uri = Uri.parse('${ApiConfig.baseUrl}/asistencias/').replace(
+      queryParameters: {'student_id': studentId.toString()},
     );
 
     final respuesta = await http.get(uri).timeout(const Duration(seconds: 45));
