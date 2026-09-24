@@ -8,11 +8,13 @@ import '../../core/theme/colores_app.dart';
 import '../../services/api_config.dart';
 import '../../services/servicio_asistencia_backend.dart';
 import '../../services/servicio_docentes.dart';
+import '../../services/servicio_grados.dart';
 
 class _Curso {
   final int id;
   final String title;
-  const _Curso({required this.id, required this.title});
+  final int? gradoId;
+  const _Curso({required this.id, required this.title, this.gradoId});
 }
 
 class AsistenciaScreen extends StatefulWidget {
@@ -27,12 +29,12 @@ class _AsistenciaScreenState extends State<AsistenciaScreen> {
   Map<int, AsistenciaDocenteBackend> _registros = {};
   bool _cargando = true;
   List<_Curso> _cursos = [];
-  int? _cursoSeleccionado;
 
   @override
   void initState() {
     super.initState();
     TeacherService().cargarDesdeBackend();
+    GradoService().cargarDesdeBackend();
     _cargarAsistencias();
     _cargarCursos();
   }
@@ -47,9 +49,12 @@ class _AsistenciaScreenState extends State<AsistenciaScreen> {
         if (!mounted) return;
         setState(() {
           _cursos = datos
-              .map((c) => _Curso(id: c['id'] as int, title: c['title'] as String))
+              .map((c) => _Curso(
+                    id: c['id'] as int,
+                    title: c['title'] as String,
+                    gradoId: c['grado_id'] as int?,
+                  ))
               .toList();
-          _cursoSeleccionado = _cursos.isNotEmpty ? _cursos.first.id : null;
         });
       }
     } catch (_) {}
@@ -101,19 +106,84 @@ class _AsistenciaScreenState extends State<AsistenciaScreen> {
   }
 
   Future<void> _descargarReporte() async {
-    if (_cursoSeleccionado == null) {
+    final gradoService = GradoService();
+
+    if (gradoService.grados.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Selecciona un curso para descargar el reporte.')),
+        const SnackBar(content: Text('No hay grados registrados todavía.')),
       );
       return;
     }
 
-    final url = AsistenciaBackendService().urlReporteDiario(
-      cursoId: _cursoSeleccionado!,
-      fecha: _fecha,
+    String? gradoElegido;
+    _Curso? cursoElegido;
+
+    await showDialog(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) {
+          final gradoId = gradoElegido == null ? null : gradoService.idPorNombre(gradoElegido!);
+          final cursosDelGrado = gradoId == null
+              ? <_Curso>[]
+              : _cursos.where((c) => c.gradoId == gradoId).toList();
+
+          return AlertDialog(
+            title: const Text('Reporte de asistencia'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('GRADO', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
+                const SizedBox(height: 6),
+                DropdownButtonFormField<String>(
+                  initialValue: gradoElegido,
+                  hint: const Text('Selecciona un grado'),
+                  decoration: const InputDecoration(border: OutlineInputBorder(), isDense: true),
+                  items: gradoService.grados.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
+                  onChanged: (v) => setDialogState(() {
+                    gradoElegido = v;
+                    cursoElegido = null;
+                  }),
+                ),
+                const SizedBox(height: 16),
+                const Text('MATERIA', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
+                const SizedBox(height: 6),
+                DropdownButtonFormField<_Curso>(
+                  initialValue: cursoElegido,
+                  hint: Text(gradoElegido == null ? 'Elige un grado primero' : 'Selecciona una materia'),
+                  decoration: const InputDecoration(border: OutlineInputBorder(), isDense: true),
+                  items: cursosDelGrado
+                      .map((c) => DropdownMenuItem(value: c, child: Text(c.title)))
+                      .toList(),
+                  onChanged: cursosDelGrado.isEmpty ? null : (v) => setDialogState(() => cursoElegido = v),
+                ),
+                if (gradoElegido != null && cursosDelGrado.isEmpty) ...[
+                  const SizedBox(height: 8),
+                  const Text('Este grado no tiene materias registradas.',
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Cancelar')),
+              ElevatedButton(
+                onPressed: cursoElegido == null
+                    ? null
+                    : () async {
+                        Navigator.pop(dialogContext);
+                        final url = AsistenciaBackendService().urlReporteDiario(
+                          cursoId: cursoElegido!.id,
+                          fecha: _fecha,
+                        );
+                        await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+                      },
+                child: const Text('Descargar'),
+              ),
+            ],
+          );
+        },
+      ),
     );
-    final uri = Uri.parse(url);
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
   @override
@@ -155,30 +225,13 @@ class _AsistenciaScreenState extends State<AsistenciaScreen> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          decoration: BoxDecoration(color: const Color(0xFFF3F4F7), borderRadius: BorderRadius.circular(10)),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<int>(
-                              value: _cursoSeleccionado,
-                              isExpanded: true,
-                              hint: const Text('Selecciona un curso'),
-                              items: _cursos.map((c) => DropdownMenuItem(value: c.id, child: Text(c.title))).toList(),
-                              onChanged: (v) => setState(() => _cursoSeleccionado = v),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      OutlinedButton.icon(
-                        onPressed: _descargarReporte,
-                        icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
-                        label: const Text('Reporte'),
-                      ),
-                    ],
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _descargarReporte,
+                      icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
+                      label: const Text('Descargar reporte por grado y materia'),
+                    ),
                   ),
                 ],
               ),
