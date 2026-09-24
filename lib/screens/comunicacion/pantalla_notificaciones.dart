@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/colores_app.dart';
+import '../../models/acudiente_cuenta.dart';
 import '../../models/notificacion.dart';
 import '../../services/servicio_acudientes.dart';
+import '../../services/servicio_auth.dart';
 import '../../services/servicio_notificaciones.dart';
 import '../../services/servicio_notificaciones_backend.dart';
 
@@ -26,13 +28,32 @@ class _NotificacionesScreenState extends State<NotificacionesScreen> {
   }
 
   Future<void> _cargarNotificacionesReales() async {
-    final cuenta = AcudientesService().cuentaActual;
-    if (cuenta == null) return;
+    setState(() => _cargando = true);
+
+    if (AcudientesService().cuentas.isEmpty) {
+      await AcudientesService().cargarDesdeBackend();
+    }
+
+    final correo = AuthService().sesionActual?.correo;
+    AcudienteCuenta? cuenta;
+    for (final c in AcudientesService().cuentas) {
+      if (c.correo.trim().toLowerCase() == correo) {
+        cuenta = c;
+        break;
+      }
+    }
+    cuenta ??= AcudientesService().cuentaActual;
+
+    if (cuenta == null) {
+      if (mounted) setState(() => _cargando = false);
+      return;
+    }
 
     final acudienteId = int.tryParse(cuenta.id);
-    if (acudienteId == null) return;
-
-    setState(() => _cargando = true);
+    if (acudienteId == null) {
+      if (mounted) setState(() => _cargando = false);
+      return;
+    }
 
     final notificaciones =
         await NotificacionesBackendService().obtenerParaAcudiente(acudienteId);
