@@ -1,4 +1,6 @@
+// ignore_for_file: avoid_web_libraries_in_flutter
 import 'dart:convert';
+import 'dart:html' as html;
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -7,6 +9,22 @@ import '../../core/theme/colores_app.dart';
 import '../../services/api_config.dart';
 import '../../services/servicio_auth.dart';
 import '../../services/servicio_notificaciones_backend.dart';
+
+String _telefonoWhatsapp(String telefono) {
+  final digitos = telefono.replaceAll(RegExp(r'\D'), '');
+  if (digitos.startsWith('57') && digitos.length == 12) return digitos;
+  if (digitos.length == 10) return '57$digitos';
+  return digitos;
+}
+
+void _abrirChatsWhatsapp(List<AvisoWhatsapp> avisos) {
+  for (final aviso in avisos) {
+    final telefono = _telefonoWhatsapp(aviso.telefono);
+    if (telefono.isEmpty) continue;
+    final url = 'https://wa.me/$telefono?text=${Uri.encodeComponent(aviso.mensaje)}';
+    html.window.open(url, '_blank');
+  }
+}
 
 class _CursoDocente {
   final int id;
@@ -77,14 +95,19 @@ class _FinalizarClaseScreenState extends State<FinalizarClaseScreen> {
     });
 
     try {
-      final notificados = await NotificacionesBackendService().avisarRecogida(_cursoSeleccionado!);
+      final resultado = await NotificacionesBackendService().avisarRecogida(_cursoSeleccionado!);
 
       if (!mounted) return;
 
+      if (resultado.whatsapp.isNotEmpty) {
+        _abrirChatsWhatsapp(resultado.whatsapp);
+      }
+
       setState(() {
         _enviando = false;
-        _mensajeExito = notificados > 0
-            ? 'Aviso enviado a $notificados acudiente(s).'
+        _mensajeExito = resultado.acudientesNotificados > 0
+            ? 'Aviso enviado a ${resultado.acudientesNotificados} acudiente(s)'
+                '${resultado.whatsapp.isNotEmpty ? '. Se abrió un chat de WhatsApp por cada uno: solo falta darle "Enviar" en cada pestaña.' : '.'}'
             : 'No hay acudientes registrados para notificar en este curso.';
       });
     } on AuthException catch (error) {
