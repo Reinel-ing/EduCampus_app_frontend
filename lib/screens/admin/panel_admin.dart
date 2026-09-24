@@ -18,6 +18,7 @@ import 'pantalla_gestion_docentes.dart';
 import 'pantalla_gestion_acudientes.dart';
 import 'pantalla_alertas_alumnos.dart';
 import 'pantalla_clases_finalizadas.dart';
+import 'pantalla_firmas_digitales.dart';
 
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});
@@ -43,6 +44,7 @@ class AdminDashboard extends StatelessWidget {
             NavItem(label: 'Docentes', icon: Icons.badge_rounded, screenBuilder: (_) => const GestionDocentesScreen()),
             NavItem(label: 'Acudientes', icon: Icons.family_restroom_rounded, screenBuilder: (_) => const GestionAcudientesScreen()),
             NavItem(label: 'Grados', icon: Icons.class_rounded, screenBuilder: (_) => const GradosScreen()),
+            NavItem(label: 'Firmas digitales', icon: Icons.draw_rounded, screenBuilder: (_) => const FirmasDigitalesScreen()),
           ],
         ),
         NavSection(
