@@ -89,7 +89,7 @@ class AdminHomeContent extends StatelessWidget {
                     crossAxisCount: isWide ? 4 : 2,
                     mainAxisSpacing: 14,
                     crossAxisSpacing: 14,
-                    childAspectRatio: 1.4,
+                    childAspectRatio: isWide ? 1.4 : 1.1,
                     children: [
                       _AdminStatCard(
                         icon: Icons.groups_2_rounded,
@@ -321,7 +321,7 @@ class _AdminStatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
@@ -329,23 +329,26 @@ class _AdminStatCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
               color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: color, size: 22),
+            child: Icon(icon, color: color, size: 18),
           ),
-          const Spacer(),
+          const SizedBox(height: 6),
           Text(value,
               style: const TextStyle(
-                  fontSize: 24,
+                  fontSize: 21,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary)),
           Text(label,
-              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary)),
         ],
       ),
     );
