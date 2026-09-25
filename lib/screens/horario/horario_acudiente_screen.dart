@@ -38,9 +38,7 @@ class _HorarioAcudienteScreenState extends State<HorarioAcudienteScreen> {
     if (StudentService().students.isEmpty) {
       await StudentService().cargarDesdeBackend();
     }
-    if (AcademicService().materias.isEmpty) {
-      await AcademicService().cargarDesdeBackend();
-    }
+    await AcademicService().cargarDesdeBackend();
 
     _misEstudiantes = StudentService()
         .students
