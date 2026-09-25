@@ -145,7 +145,7 @@ class _HorarioAdminScreenState extends State<HorarioAdminScreen> with SingleTick
                   items: materias
                       .map((m) => DropdownMenuItem(
                             value: m,
-                            child: Text('${m.nombre} · ${m.grado} · ${m.docenteNombre}'),
+                            child: Text('${m.nombre} · ${m.grado}'),
                           ))
                       .toList(),
                   onChanged: (v) => setDialogState(() => materiaSeleccionada = v ?? materiaSeleccionada),
