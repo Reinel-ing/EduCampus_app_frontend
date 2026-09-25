@@ -16,11 +16,20 @@ class GestionAcudientesScreen extends StatefulWidget {
 }
 
 class _GestionAcudientesScreenState extends State<GestionAcudientesScreen> {
+  final _busquedaCtrl = TextEditingController();
+  String _busqueda = '';
+
   @override
   void initState() {
     super.initState();
     AcudientesService().cargarDesdeBackend();
     StudentService().cargarDesdeBackendSiHaceFalta();
+  }
+
+  @override
+  void dispose() {
+    _busquedaCtrl.dispose();
+    super.dispose();
   }
 
   void _abrirFormulario(BuildContext context, {AcudienteCuenta? cuenta}) {
@@ -40,21 +49,57 @@ class _GestionAcudientesScreenState extends State<GestionAcudientesScreen> {
         ListenableBuilder(
           listenable: service,
           builder: (context, _) {
-            final cuentas = service.cuentas;
-            if (cuentas.isEmpty) {
-              return Center(
-                child: Text(
-                  service.cargando ? 'Cargando acudientes...' : 'Sin cuentas de acudiente registradas',
-                  style: const TextStyle(color: AppColors.textSecondary),
+            final todas = service.cuentas;
+            final filtro = _busqueda.trim().toLowerCase();
+            final cuentas = filtro.isEmpty
+                ? todas
+                : todas.where((c) => c.nombre.toLowerCase().contains(filtro)).toList();
+
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                  child: TextField(
+                    controller: _busquedaCtrl,
+                    onChanged: (v) => setState(() => _busqueda = v),
+                    decoration: InputDecoration(
+                      hintText: 'Buscar por nombre...',
+                      prefixIcon: const Icon(Icons.search_rounded),
+                      suffixIcon: _busqueda.isEmpty
+                          ? null
+                          : IconButton(
+                              icon: const Icon(Icons.close_rounded),
+                              onPressed: () => setState(() {
+                                _busquedaCtrl.clear();
+                                _busqueda = '';
+                              }),
+                            ),
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE7E7EC))),
+                    ),
+                  ),
                 ),
-              );
-            }
-            return ListView.separated(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 90),
-              itemCount: cuentas.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (context, index) {
-                final c = cuentas[index];
+                Expanded(
+                  child: todas.isEmpty
+                      ? Center(
+                          child: Text(
+                            service.cargando ? 'Cargando acudientes...' : 'Sin cuentas de acudiente registradas',
+                            style: const TextStyle(color: AppColors.textSecondary),
+                          ),
+                        )
+                      : cuentas.isEmpty
+                          ? const Center(
+                              child: Text('No se encontró ningún acudiente con ese nombre',
+                                  style: TextStyle(color: AppColors.textSecondary)),
+                            )
+                          : ListView.separated(
+                              padding: const EdgeInsets.fromLTRB(20, 12, 20, 90),
+                              itemCount: cuentas.length,
+                              separatorBuilder: (_, __) => const SizedBox(height: 10),
+                              itemBuilder: (context, index) {
+                                final c = cuentas[index];
                 return Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -88,11 +133,14 @@ class _GestionAcudientesScreenState extends State<GestionAcudientesScreen> {
                         ),
                       ],
                     ),
-                    trailing: const Icon(Icons.chevron_right_rounded),
-                    onTap: () => _abrirFormulario(context, cuenta: c),
-                  ),
-                );
-              },
+                                    trailing: const Icon(Icons.chevron_right_rounded),
+                                    onTap: () => _abrirFormulario(context, cuenta: c),
+                                  ),
+                                );
+                              },
+                            ),
+                ),
+              ],
             );
           },
         ),

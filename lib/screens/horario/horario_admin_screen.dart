@@ -120,7 +120,11 @@ class _HorarioAdminScreenState extends State<HorarioAdminScreen> with SingleTick
     );
   }
 
-  void _abrirFormularioHorario(Materia materia) async {
+  void _abrirFormularioHorario([Materia? materiaInicial]) async {
+    final materias = _service.materias;
+    if (materias.isEmpty) return;
+
+    Materia materiaSeleccionada = materiaInicial ?? materias.first;
     String dia = diasSemana.first;
     final inicioCtrl = TextEditingController(text: '07:00');
     final finCtrl = TextEditingController(text: '08:00');
@@ -130,21 +134,35 @@ class _HorarioAdminScreenState extends State<HorarioAdminScreen> with SingleTick
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: Text('Horario para ${materia.nombre}'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              DropdownButtonFormField<String>(
-                initialValue: dia,
-                decoration: const InputDecoration(labelText: 'Día'),
-                items: diasSemana.map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
-                onChanged: (v) => setDialogState(() => dia = v ?? dia),
-              ),
-              const SizedBox(height: 12),
-              TextField(controller: inicioCtrl, decoration: const InputDecoration(labelText: 'Hora inicio (HH:MM)')),
-              const SizedBox(height: 12),
-              TextField(controller: finCtrl, decoration: const InputDecoration(labelText: 'Hora fin (HH:MM)')),
-            ],
+          title: const Text('Agregar horario'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButtonFormField<Materia>(
+                  initialValue: materiaSeleccionada,
+                  decoration: const InputDecoration(labelText: 'Curso'),
+                  items: materias
+                      .map((m) => DropdownMenuItem(
+                            value: m,
+                            child: Text('${m.nombre} · ${m.grado} · ${m.docenteNombre}'),
+                          ))
+                      .toList(),
+                  onChanged: (v) => setDialogState(() => materiaSeleccionada = v ?? materiaSeleccionada),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: dia,
+                  decoration: const InputDecoration(labelText: 'Día'),
+                  items: diasSemana.map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
+                  onChanged: (v) => setDialogState(() => dia = v ?? dia),
+                ),
+                const SizedBox(height: 12),
+                TextField(controller: inicioCtrl, decoration: const InputDecoration(labelText: 'Hora inicio (HH:MM)')),
+                const SizedBox(height: 12),
+                TextField(controller: finCtrl, decoration: const InputDecoration(labelText: 'Hora fin (HH:MM)')),
+              ],
+            ),
           ),
           actions: [
             TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
@@ -155,7 +173,7 @@ class _HorarioAdminScreenState extends State<HorarioAdminScreen> with SingleTick
                       setDialogState(() => guardando = true);
 
                       final error = await _service.agregarHorarioEntry(
-                        materiaId: materia.id,
+                        materiaId: materiaSeleccionada.id,
                         dia: dia,
                         horaInicio: inicioCtrl.text.trim(),
                         horaFin: finCtrl.text.trim(),
@@ -277,9 +295,23 @@ class _HorarioAdminScreenState extends State<HorarioAdminScreen> with SingleTick
                         ),
                       ],
                     ),
-                    Padding(
+                    SingleChildScrollView(
                       padding: const EdgeInsets.all(16),
-                      child: WeeklyScheduleGrid(entries: horarioFiltrado),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: ElevatedButton.icon(
+                              onPressed: _service.materias.isEmpty ? null : () => _abrirFormularioHorario(),
+                              icon: const Icon(Icons.add),
+                              label: const Text('Agregar horario'),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          WeeklyScheduleGrid(entries: horarioFiltrado),
+                        ],
+                      ),
                     ),
                   ],
                 ),

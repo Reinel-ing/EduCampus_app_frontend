@@ -14,10 +14,19 @@ class EstudiantesListScreen extends StatefulWidget {
 }
 
 class _EstudiantesListScreenState extends State<EstudiantesListScreen> {
+  final _busquedaCtrl = TextEditingController();
+  String _busqueda = '';
+
   @override
   void initState() {
     super.initState();
     StudentService().cargarDesdeBackend();
+  }
+
+  @override
+  void dispose() {
+    _busquedaCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _notificarRecogida(BuildContext context, Student s) async {
@@ -101,23 +110,57 @@ class _EstudiantesListScreenState extends State<EstudiantesListScreen> {
         ListenableBuilder(
           listenable: service,
           builder: (context, _) {
-            final students = service.students;
+            final todos = service.students;
+            final filtro = _busqueda.trim().toLowerCase();
+            final students = filtro.isEmpty
+                ? todos
+                : todos.where((s) => s.nombreCompleto.toLowerCase().contains(filtro)).toList();
 
-            if (students.isEmpty) {
-              return Center(
-                child: Text(
-                  service.cargando ? 'Cargando estudiantes...' : 'Aún no hay estudiantes registrados',
-                  style: const TextStyle(color: AppColors.textSecondary),
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                  child: TextField(
+                    controller: _busquedaCtrl,
+                    onChanged: (v) => setState(() => _busqueda = v),
+                    decoration: InputDecoration(
+                      hintText: 'Buscar por nombre...',
+                      prefixIcon: const Icon(Icons.search_rounded),
+                      suffixIcon: _busqueda.isEmpty
+                          ? null
+                          : IconButton(
+                              icon: const Icon(Icons.close_rounded),
+                              onPressed: () => setState(() {
+                                _busquedaCtrl.clear();
+                                _busqueda = '';
+                              }),
+                            ),
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE7E7EC))),
+                    ),
+                  ),
                 ),
-              );
-            }
-
-            return ListView.separated(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 90),
-              itemCount: students.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (context, index) {
-                final s = students[index];
+                Expanded(
+                  child: todos.isEmpty
+                      ? Center(
+                          child: Text(
+                            service.cargando ? 'Cargando estudiantes...' : 'Aún no hay estudiantes registrados',
+                            style: const TextStyle(color: AppColors.textSecondary),
+                          ),
+                        )
+                      : students.isEmpty
+                          ? const Center(
+                              child: Text('No se encontró ningún estudiante con ese nombre',
+                                  style: TextStyle(color: AppColors.textSecondary)),
+                            )
+                          : ListView.separated(
+                              padding: const EdgeInsets.fromLTRB(20, 12, 20, 90),
+                              itemCount: students.length,
+                              separatorBuilder: (_, __) => const SizedBox(height: 10),
+                              itemBuilder: (context, index) {
+                                final s = students[index];
                 return Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -145,17 +188,20 @@ class _EstudiantesListScreenState extends State<EstudiantesListScreen> {
                         const Icon(Icons.chevron_right_rounded),
                       ],
                     ),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => FormularioEstudianteScreen(estudiante: s),
-                        ),
-                      );
-                    },
-                  ),
-                );
-              },
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => FormularioEstudianteScreen(estudiante: s),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
+                ),
+              ],
             );
           },
         ),

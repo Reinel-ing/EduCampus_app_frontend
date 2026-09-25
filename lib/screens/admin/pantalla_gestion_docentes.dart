@@ -15,10 +15,19 @@ class GestionDocentesScreen extends StatefulWidget {
 }
 
 class _GestionDocentesScreenState extends State<GestionDocentesScreen> {
+  final _busquedaCtrl = TextEditingController();
+  String _busqueda = '';
+
   @override
   void initState() {
     super.initState();
     TeacherService().cargarDesdeBackend();
+  }
+
+  @override
+  void dispose() {
+    _busquedaCtrl.dispose();
+    super.dispose();
   }
 
   void _abrirFormulario(BuildContext context, {Teacher? docente}) {
@@ -38,21 +47,57 @@ class _GestionDocentesScreenState extends State<GestionDocentesScreen> {
         ListenableBuilder(
           listenable: service,
           builder: (context, _) {
-            final docentes = service.teachers;
-            if (docentes.isEmpty) {
-              return Center(
-                child: Text(
-                  service.cargando ? 'Cargando docentes...' : 'Sin docentes registrados',
-                  style: const TextStyle(color: AppColors.textSecondary),
+            final todos = service.teachers;
+            final filtro = _busqueda.trim().toLowerCase();
+            final docentes = filtro.isEmpty
+                ? todos
+                : todos.where((d) => d.nombreCompleto.toLowerCase().contains(filtro)).toList();
+
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                  child: TextField(
+                    controller: _busquedaCtrl,
+                    onChanged: (v) => setState(() => _busqueda = v),
+                    decoration: InputDecoration(
+                      hintText: 'Buscar por nombre...',
+                      prefixIcon: const Icon(Icons.search_rounded),
+                      suffixIcon: _busqueda.isEmpty
+                          ? null
+                          : IconButton(
+                              icon: const Icon(Icons.close_rounded),
+                              onPressed: () => setState(() {
+                                _busquedaCtrl.clear();
+                                _busqueda = '';
+                              }),
+                            ),
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE7E7EC))),
+                    ),
+                  ),
                 ),
-              );
-            }
-            return ListView.separated(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 90),
-              itemCount: docentes.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
-              itemBuilder: (context, index) {
-                final d = docentes[index];
+                Expanded(
+                  child: todos.isEmpty
+                      ? Center(
+                          child: Text(
+                            service.cargando ? 'Cargando docentes...' : 'Sin docentes registrados',
+                            style: const TextStyle(color: AppColors.textSecondary),
+                          ),
+                        )
+                      : docentes.isEmpty
+                          ? const Center(
+                              child: Text('No se encontró ningún docente con ese nombre',
+                                  style: TextStyle(color: AppColors.textSecondary)),
+                            )
+                          : ListView.separated(
+                              padding: const EdgeInsets.fromLTRB(20, 12, 20, 90),
+                              itemCount: docentes.length,
+                              separatorBuilder: (_, __) => const SizedBox(height: 10),
+                              itemBuilder: (context, index) {
+                                final d = docentes[index];
                 return Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -80,11 +125,14 @@ class _GestionDocentesScreenState extends State<GestionDocentesScreen> {
                         ),
                       ],
                     ),
-                    trailing: const Icon(Icons.chevron_right_rounded),
-                    onTap: () => _abrirFormulario(context, docente: d),
-                  ),
-                );
-              },
+                                    trailing: const Icon(Icons.chevron_right_rounded),
+                                    onTap: () => _abrirFormulario(context, docente: d),
+                                  ),
+                                );
+                              },
+                            ),
+                ),
+              ],
             );
           },
         ),
