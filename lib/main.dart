@@ -1,5 +1,4 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:flutter/semantics.dart';
 import 'core/theme/tema_app.dart';
 import 'core/destino_por_rol.dart';
 import 'services/servicio_formularios.dart';
@@ -8,13 +7,6 @@ import 'screens/auth/pantalla_inicio_sesion.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // En Flutter Web, el motor reserva el primer toque de la pagina para
-  // activar el arbol de semantica (accesibilidad) mediante un elemento
-  // invisible a pantalla completa. Eso hace que en iOS Safari el primer
-  // toque sobre cualquier campo (por ejemplo el correo del login) se
-  // "pierda" y haya que tocar dos veces. Al activar la semantica de una
-  // vez al arrancar, ese toque de calentamiento deja de ser necesario.
-  SemanticsBinding.instance.ensureSemantics();
   await FormulariosService().cargar();
   runApp(const EduCampusApp());
 }
