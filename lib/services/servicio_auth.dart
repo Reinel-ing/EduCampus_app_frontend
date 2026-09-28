@@ -75,7 +75,6 @@ class AuthService extends ChangeNotifier {
       );
 
       _sesionActual = sesion;
-      await _guardarSesion(sesion);
       notifyListeners();
 
       return sesion;
@@ -140,6 +139,15 @@ class AuthService extends ChangeNotifier {
       return sesion;
     } catch (_) {
       return null;
+    }
+  }
+
+  /// Guarda la sesión actual en el dispositivo para que se restaure
+  /// automáticamente la próxima vez que se abra la app. Se llama solo
+  /// si el usuario acepta cuando se le pregunta al iniciar sesión.
+  Future<void> recordarSesion() async {
+    if (_sesionActual != null) {
+      await _guardarSesion(_sesionActual!);
     }
   }
 

@@ -62,6 +62,34 @@ class _LoginScreenState extends State<LoginScreen> {
 
       setState(() => _isLoading = false);
 
+      final guardarSesion = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('¿Mantener la sesión iniciada?'),
+          content: const Text(
+            'Si aceptas, la próxima vez que abras la app en este dispositivo '
+            'entrarás directo sin volver a escribir tu correo y contraseña.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('No'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Sí, guardar'),
+            ),
+          ],
+        ),
+      );
+
+      if (guardarSesion == true) {
+        await AuthService().recordarSesion();
+      }
+
+      if (!mounted) return;
+
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => destino),
       );
