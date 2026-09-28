@@ -107,6 +107,18 @@ class AuthService extends ChangeNotifier {
   /// (por ejemplo, si el backend se reinició y perdió la sesión en memoria).
   Future<SesionUsuario?> restaurarSesion() async {
     final prefs = await SharedPreferences.getInstance();
+
+    // Antes la sesión se guardaba siempre, sin preguntar. Para que nadie
+    // quede con una sesión vieja guardada sin haberlo decidido, la primera
+    // vez que corre esta versión se borra cualquier sesión existente; de
+    // ahí en adelante solo se guarda si el usuario acepta la pregunta.
+    const migracionKey = 'sesion_opcional_migrada_v1';
+    if (prefs.getBool(migracionKey) != true) {
+      await cerrarSesion();
+      await prefs.setBool(migracionKey, true);
+      return null;
+    }
+
     final token = prefs.getString('access_token');
 
     if (token == null || token.isEmpty) return null;
