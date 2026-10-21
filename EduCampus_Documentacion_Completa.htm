@@ -1,0 +1,1179 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>EduCampus - Documentación Completa</title><style>body{margin:0;background:#07111f;color:#eef4ff;font-family:Arial,Segoe UI,sans-serif;line-height:1.45}header{position:sticky;top:0;background:#0a1527;border-bottom:1px solid #2a3a58;padding:20px 28px;z-index:10}h1{margin:0 0 6px}h2{margin-top:28px;color:#9fc5ff}h3{color:#cde0ff}p{color:#b8c3d8}main{max-width:1450px;margin:auto;padding:24px}section{background:#101b2f;border:1px solid #293957;border-radius:14px;padding:20px;margin-bottom:22px}nav{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}nav a{color:#dce8ff;text-decoration:none;border:1px solid #3a557e;padding:6px 9px;border-radius:8px;font-size:13px}.diagram{overflow:auto;background:#07101c;border:1px solid #263651;border-radius:12px;padding:8px}.diagram svg{min-width:1050px;max-width:none;height:auto}table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:7px;border-bottom:1px solid #2a3852;vertical-align:top;text-align:left}th{background:#13213a;color:#d6e3fa}code,pre{font-family:Consolas,monospace}code{background:#081220;padding:2px 4px;border-radius:4px;color:#cfe8ff}pre{background:#091322;padding:12px;border-radius:9px;overflow:auto;color:#dae7f8}.note{background:#0d2233;border-left:4px solid #63e5c1;padding:12px;border-radius:8px}.warn{background:#2a210f;border-left:4px solid #ffd166;padding:12px;border-radius:8px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px}.card{background:#16233d;border:1px solid #2d3e5d;border-radius:10px;padding:12px}.case{margin:14px 0}.small{font-size:12px;color:#91a0ba}@media(max-width:800px){header{position:static}}</style></head><body><header><h1>EduCampus - Documentación Completa</h1><div>Documentación técnica, pruebas, medición y estimación.</div><nav><a href="#p1">Parte I</a><a href="#p2">Parte II</a><a href="#p3">Parte III</a><a href="#p4">Parte IV</a><a href="#concl">Conclusiones</a></nav></header><main><section><div class="note"><b>Fuente primaria:</b> EduCampus_app (14).zip. <b>Plantilla:</b> Plantilla proyecto final.doc. <b>Contexto histórico:</b> presentación vieja.pdf.</div></section><section id="p1"><h2>PRIMERA PARTE — I. DESCRIPCION DEL SISTEMA</h2><h3>1.1. IDENTIFICACION DEL PROBLEMA</h3><p>El Colegio Manantial de Sabiduría (COLMAS), institución orientada a la educación preescolar y primaria, ha identificado que una parte importante de sus procesos administrativos, académicos y de registro se realiza de forma física y manual. La presentación inicial del proyecto describe esta situación como poco eficiente, poco estandarizada y difícil de mantener de forma constante, lo que afecta la gestión de la información necesaria para el acompañamiento de los estudiantes. El proyecto surge para centralizar esos procesos en una solución digital que permita a docentes, personal administrativo y acudientes consultar y registrar información desde un único sistema. El alcance funcional actual comprende estudiantes, cursos, actividades, asistencia, evaluación, convivencia, alertas, materiales, horarios, calendario, notificaciones, boletines y reportes. Los módulos financieros de pagos, pensiones y contabilidad no forman parte del alcance activo documentado.</p><h3>1.2. DESCRIPCIÓN DETALLADA DEL SISTEMA O APLICACIÓN</h3><p>EduCampus es una solución de gestión educativa implementada con un frontend Flutter Web/PWA y un backend REST desarrollado con FastAPI. El backend utiliza SQLAlchemy 2.0 para persistencia en PostgreSQL administrado en Neon, Alembic para migraciones y Pydantic para validación. El frontend utiliza el paquete http para consumir la API, shared_preferences para persistir localmente el estado elegido de la sesión, y clases singleton que extienden ChangeNotifier para manejar el estado de los módulos. La aplicación expone tres perfiles principales: Administrador, Docente y Acudiente. El flujo de acceso actual es correo y contraseña; el requisito previo de acceso mediante código de carnet del estudiante no está implementado en el código revisado y por tanto no se describe como funcionalidad actual.</p><p>El Administrador gestiona personas, grados, firmas, evaluación, asistencia, convivencia, alertas, calendario, horarios, formularios, reportes y configuración. El Docente gestiona estudiantes de sus cursos, asistencia, calificaciones o logros, materiales, actividades, entregas, convivencia, horario y avisos de recogida. El Acudiente consulta el progreso del estudiante a su cargo, asistencia, actividades, materiales, horario, calendario, notificaciones y boletines. La API contiene además funcionalidades de matrícula y comunicación, pero la documentación técnica indica que algunas no son consumidas por pantallas activas.</p><p>La presentación inicial del proyecto definió Scrum como metodología propuesta, justificada por el desarrollo incremental de módulos como estudiantes, actividades, asistencia, evaluación, seguimiento y comunicación. La implementación técnica actual evidencia integración continua directa sobre la rama principal, despliegue automático y separación en frontend/backend, pero no aporta evidencia suficiente para afirmar que todos los eventos y artefactos de Scrum hayan sido formalmente ejecutados. En este documento Scrum se registra como metodología declarada en la propuesta inicial, no como evidencia de cumplimiento total.</p><h3>1.3. MODELO DE REQUERIMIENTOS</h3><h4>1.3.1. Descripción Requisitos funcionales</h4><table><thead><tr><th>ID</th><th>Módulo</th><th>Requisito</th><th>Actor/capa</th><th>Estado</th></tr></thead><tbody><tr><td>RF01</td><td>Autenticación</td><td>Iniciar sesión con correo y contraseña mediante /auth/login/.</td><td>Administrador, Docente, Acudiente</td><td>Implementado</td></tr><tr><td>RF02</td><td>Sesión</td><td>Restaurar la sesión local mediante /auth/session/.</td><td>Todos</td><td>Implementado</td></tr><tr><td>RF03</td><td>Usuarios</td><td>Registrar estudiantes, docentes y acudientes mediante /auth/registro/.</td><td>Administrador</td><td>Implementado</td></tr><tr><td>RF04</td><td>Usuarios</td><td>Consultar estudiantes, docentes y acudientes.</td><td>Administrador</td><td>Implementado</td></tr><tr><td>RF05</td><td>Grados</td><td>Crear, editar y eliminar grados.</td><td>Administrador</td><td>Implementado</td></tr><tr><td>RF06</td><td>Firmas</td><td>Consultar/cargar firmas digitales de docentes y administrador.</td><td>Administrador</td><td>Implementado</td></tr><tr><td>RF07</td><td>Evaluación</td><td>Registrar calificaciones numéricas de 0 a 5.</td><td>Docente, Administrador</td><td>Implementado</td></tr><tr><td>RF08</td><td>Evaluación</td><td>Registrar logros/observaciones de preescolar por periodo.</td><td>Docente, Administrador</td><td>Implementado</td></tr><tr><td>RF09</td><td>Boletines</td><td>Generar y descargar boletines PDF por estudiante y periodo.</td><td>Acudiente, Administrador</td><td>Implementado</td></tr><tr><td>RF10</td><td>Asistencia</td><td>Registrar y consultar asistencia de estudiantes.</td><td>Docente, Administrador</td><td>Implementado</td></tr><tr><td>RF11</td><td>Asistencia docente</td><td>Registrar y consultar asistencia de profesores.</td><td>Administrador</td><td>Implementado</td></tr><tr><td>RF12</td><td>Convivencia</td><td>Registrar, consultar, actualizar seguimiento y eliminar situaciones.</td><td>Docente, Administrador</td><td>Implementado</td></tr><tr><td>RF13</td><td>Alertas</td><td>Crear y atender alertas con respuesta administrativa.</td><td>Docente, Administrador</td><td>Implementado</td></tr><tr><td>RF14</td><td>Recogida</td><td>Registrar finalización de clase y avisar a acudientes.</td><td>Docente</td><td>Implementado</td></tr><tr><td>RF15</td><td>Notificaciones</td><td>Consultar notificaciones y marcarlas como leídas.</td><td>Docente, Acudiente</td><td>Implementado</td></tr><tr><td>RF16</td><td>Materiales</td><td>Publicar, listar y eliminar material didáctico.</td><td>Docente, Administrador</td><td>Implementado</td></tr><tr><td>RF17</td><td>Actividades</td><td>Crear y listar tareas con fecha límite y opción de video.</td><td>Docente, Acudiente</td><td>Implementado</td></tr><tr><td>RF18</td><td>Entregas</td><td>Subir entregas multipart, descargar archivos y calificarlas.</td><td>Acudiente, Docente</td><td>Implementado</td></tr><tr><td>RF19</td><td>Reglas de entrega</td><td>Rechazar entregas fuera de plazo, formatos no permitidos, video no autorizado y archivos &gt;200 MiB.</td><td>Backend</td><td>Implementado</td></tr><tr><td>RF20</td><td>Horario</td><td>Crear, listar y eliminar bloques de horario.</td><td>Administrador, Docente, Acudiente</td><td>Implementado</td></tr><tr><td>RF21</td><td>Calendario</td><td>Crear, consultar y eliminar eventos.</td><td>Administrador, Todos consulta</td><td>Implementado</td></tr><tr><td>RF22</td><td>Comunicación</td><td>Crear comunicados institucionales.</td><td>Administrador</td><td>Endpoint existe; frontend activo no persiste</td></tr><tr><td>RF23</td><td>Formularios</td><td>Crear plantillas, campos y diligenciar formularios.</td><td>Administrador, usuarios según formulario</td><td>Parcial</td></tr><tr><td>RF24</td><td>Campos personalizados</td><td>Definir campos adicionales en la ficha del estudiante.</td><td>Administrador</td><td>Implementado en frontend/modelo</td></tr><tr><td>RF25</td><td>Reportes</td><td>Generar reporte diario y estadísticas institucionales.</td><td>Administrador</td><td>Implementado</td></tr><tr><td>RF26</td><td>PWA</td><td>Instalar la aplicación web como PWA.</td><td>Todos</td><td>Implementado</td></tr><tr><td>RF27</td><td>Salud</td><td>Verificar API y conexión a PostgreSQL mediante / y /health.</td><td>Operación</td><td>Implementado</td></tr><tr><td>RF28</td><td>Matrícula</td><td>Crear matrícula mediante /matriculas/.</td><td>Administrador</td><td>Endpoint disponible; no hay interfaz activa</td></tr></tbody></table><h4>1.3.2. Descripción Requisitos no funcionales</h4><table><thead><tr><th>ID</th><th>Categoría</th><th>Requisito</th><th>Estado</th></tr></thead><tbody><tr><td>RNF01</td><td>Seguridad</td><td>Contraseñas verificadas con bcrypt; existe además cifrado reversible para consulta administrativa.</td><td>Implementado; riesgo residual por reversibilidad</td></tr><tr><td>RNF02</td><td>Sesiones</td><td>Sesiones del backend se mantienen en memoria y se invalidan al reiniciar.</td><td>Limitación actual</td></tr><tr><td>RNF03</td><td>Disponibilidad</td><td>Backend desplegado en Render gratuito, con suspensión por inactividad.</td><td>Limitación actual</td></tr><tr><td>RNF04</td><td>Persistencia</td><td>PostgreSQL gestionado en Neon.</td><td>Implementado</td></tr><tr><td>RNF05</td><td>Archivos</td><td>Entregas en filesystem de Render; el plan gratuito usa almacenamiento efímero.</td><td>Limitación actual</td></tr><tr><td>RNF06</td><td>Validación</td><td>Pydantic valida dominios de correo, contraseña, rol, nota, periodo y otros payloads.</td><td>Implementado</td></tr><tr><td>RNF07</td><td>API</td><td>Comunicación REST en JSON y multipart/form-data.</td><td>Implementado</td></tr><tr><td>RNF08</td><td>Portabilidad</td><td>Flutter Web/PWA; prueba responsive para 320x568, 390x844, 768x1024 y 1366x768.</td><td>Implementado en código/pruebas</td></tr><tr><td>RNF09</td><td>Mantenibilidad</td><td>Separación frontend por models/services/screens/widgets/core y backend en main/models/schemas/database.</td><td>Implementado</td></tr><tr><td>RNF10</td><td>Integridad</td><td>FK, UNIQUE y políticas ondelete definidas en SQLAlchemy.</td><td>Implementado</td></tr><tr><td>RNF11</td><td>CORS</td><td>allow_origins=[&quot;*&quot;] en el backend.</td><td>Implementado; configuración permisiva</td></tr><tr><td>RNF12</td><td>Rendimiento</td><td>Cliente usa timeout de 45 s en operaciones HTTP relevantes. No existe SLA formal.</td><td>Parcial</td></tr><tr><td>RNF13</td><td>Calidad visual</td><td>La suite responsive abre paneles y opciones en cuatro resoluciones y comprueba ausencia de excepciones.</td><td>Implementado en pruebas</td></tr></tbody></table><h3>1.4. MODELO DE CASOS DE USO</h3><h4>1.4.1. Diagramas de caso de uso</h4><div class="diagram"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.42.4 (0)
+ -->
+<!-- Title: G Pages: 1 -->
+<svg width="346pt" height="715pt"
+ viewBox="0.00 0.00 346.08 715.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 711)">
+<title>G</title>
+<!-- admin -->
+<g id="node1" class="node">
+<title>admin</title>
+<polygon fill="#e8f1fb" stroke="#5e759d" points="74,-280 0,-280 0,-244 74,-244 74,-280"/>
+<text text-anchor="middle" x="37" y="-259.8" font-family="Arial" font-size="9.00">Administrador</text>
+</g>
+<!-- login -->
+<g id="node4" class="node">
+<title>login</title>
+<ellipse fill="#f5f8fc" stroke="#5e759d" cx="229.54" cy="-384" rx="52.58" ry="18"/>
+<text text-anchor="middle" x="229.54" y="-381.8" font-family="Arial" font-size="9.00">Autenticar usuario</text>
+</g>
+<!-- admin&#45;&gt;login -->
+<g id="edge1" class="edge">
+<title>admin&#45;&gt;login</title>
+<path fill="none" stroke="#647a9b" d="M70.08,-280.16C70.08,-312.1 70.08,-375 70.08,-375 70.08,-375 176.85,-375 176.85,-375"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="176.85,-377.45 183.85,-375 176.85,-372.55 176.85,-377.45"/>
+</g>
+<!-- users -->
+<g id="node5" class="node">
+<title>users</title>
+<ellipse fill="#f5f8fc" stroke="#5e759d" cx="229.54" cy="-140" rx="87.52" ry="18"/>
+<text text-anchor="middle" x="229.54" y="-137.8" font-family="Arial" font-size="9.00">Gestionar estudiantes y docentes</text>
+</g>
+<!-- admin&#45;&gt;users -->
+<g id="edge4" class="edge">
+<title>admin&#45;&gt;users</title>
+<path fill="none" stroke="#647a9b" d="M56.08,-244C56.08,-210.06 56.08,-140 56.08,-140 56.08,-140 134.54,-140 134.54,-140"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="134.54,-142.45 141.54,-140 134.54,-137.55 134.54,-142.45"/>
+</g>
+<!-- grades -->
+<g id="node6" class="node">
+<title>grades</title>
+<ellipse fill="#f5f8fc" stroke="#5e759d" cx="229.54" cy="-79" rx="50.46" ry="18"/>
+<text text-anchor="middle" x="229.54" y="-76.8" font-family="Arial" font-size="9.00">Gestionar grados</text>
+</g>
+<!-- admin&#45;&gt;grades -->
+<g id="edge5" class="edge">
+<title>admin&#45;&gt;grades</title>
+<path fill="none" stroke="#647a9b" d="M37.08,-243.78C37.08,-197.5 37.08,-79 37.08,-79 37.08,-79 172.23,-79 172.23,-79"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="172.23,-81.45 179.23,-79 172.23,-76.55 172.23,-81.45"/>
+</g>
+<!-- academic -->
+<g id="node7" class="node">
+<title>academic</title>
+<ellipse fill="#f5f8fc" stroke="#5e759d" cx="229.54" cy="-323" rx="78.54" ry="18"/>
+<text text-anchor="middle" x="229.54" y="-320.8" font-family="Arial" font-size="9.00">Gestionar evaluación / logros</text>
+</g>
+<!-- admin&#45;&gt;academic -->
+<g id="edge6" class="edge">
+<title>admin&#45;&gt;academic</title>
+<path fill="none" stroke="#647a9b" d="M72.08,-280.3C72.08,-298.27 72.08,-323 72.08,-323 72.08,-323 143.81,-323 143.81,-323"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="143.81,-325.45 150.81,-323 143.81,-320.55 143.81,-325.45"/>
+</g>
+<!-- attend -->
+<g id="node8" class="node">
+<title>attend</title>
+<ellipse fill="#f5f8fc" stroke="#5e759d" cx="229.54" cy="-262" rx="56.66" ry="18"/>
+<text text-anchor="middle" x="229.54" y="-259.8" font-family="Arial" font-size="9.00">Registrar asistencia</text>
+</g>
+<!-- admin&#45;&gt;attend -->
+<g id="edge7" class="edge">
+<title>admin&#45;&gt;attend</title>
+<path fill="none" stroke="#647a9b" d="M74.12,-258.4C74.12,-258.4 166.93,-258.4 166.93,-258.4"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="166.93,-260.85 173.93,-258.4 166.93,-255.95 166.93,-260.85"/>
+</g>
+<!-- conv -->
+<g id="node10" class="node">
+<title>conv</title>
+<ellipse fill="#f5f8fc" stroke="#5e759d" cx="229.54" cy="-201" rx="83.28" ry="18"/>
+<text text-anchor="middle" x="229.54" y="-198.8" font-family="Arial" font-size="9.00">Gestionar convivencia y alertas</text>
+</g>
+<!-- admin&#45;&gt;conv -->
+<g id="edge8" class="edge">
+<title>admin&#45;&gt;conv</title>
+<path fill="none" stroke="#647a9b" d="M74.19,-251.2C111.06,-251.2 162.08,-251.2 162.08,-251.2 162.08,-251.2 162.08,-218.65 162.08,-218.65"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="164.53,-218.65 162.08,-211.65 159.63,-218.65 164.53,-218.65"/>
+</g>
+<!-- bulletin -->
+<g id="node11" class="node">
+<title>bulletin</title>
+<ellipse fill="#f5f8fc" stroke="#5e759d" cx="229.54" cy="-445" rx="58.13" ry="18"/>
+<text text-anchor="middle" x="229.54" y="-442.8" font-family="Arial" font-size="9.00">Generar boletín PDF</text>
+</g>
+<!-- admin&#45;&gt;bulletin -->
+<g id="edge9" class="edge">
+<title>admin&#45;&gt;bulletin</title>
+<path fill="none" stroke="#647a9b" d="M68.08,-280.1C68.08,-325.48 68.08,-440.5 68.08,-440.5 68.08,-440.5 166.07,-440.5 166.07,-440.5"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="166.07,-442.95 173.07,-440.5 166.07,-438.05 166.07,-442.95"/>
+</g>
+<!-- content -->
+<g id="node13" class="node">
+<title>content</title>
+<ellipse fill="#f5f8fc" stroke="#5e759d" cx="229.54" cy="-567" rx="108.58" ry="18"/>
+<text text-anchor="middle" x="229.54" y="-564.8" font-family="Arial" font-size="9.00">Gestionar materiales / horario / calendario</text>
+</g>
+<!-- admin&#45;&gt;content -->
+<g id="edge10" class="edge">
+<title>admin&#45;&gt;content</title>
+<path fill="none" stroke="#647a9b" d="M74.08,-265.6C101.86,-265.6 135.08,-265.6 135.08,-265.6 135.08,-265.6 135.08,-550.98 135.08,-550.98"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="132.63,-550.98 135.08,-557.98 137.53,-550.98 132.63,-550.98"/>
+</g>
+<!-- reports -->
+<g id="node15" class="node">
+<title>reports</title>
+<ellipse fill="#f5f8fc" stroke="#5e759d" cx="229.54" cy="-18" rx="53.23" ry="18"/>
+<text text-anchor="middle" x="229.54" y="-15.8" font-family="Arial" font-size="9.00">Consultar reportes</text>
+</g>
+<!-- admin&#45;&gt;reports -->
+<g id="edge11" class="edge">
+<title>admin&#45;&gt;reports</title>
+<path fill="none" stroke="#647a9b" d="M19.08,-243.66C19.08,-186.92 19.08,-18 19.08,-18 19.08,-18 169.16,-18 169.16,-18"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="169.16,-20.45 176.16,-18 169.16,-15.55 169.16,-20.45"/>
+</g>
+<!-- teacher -->
+<g id="node2" class="node">
+<title>teacher</title>
+<polygon fill="#e8f8e2" stroke="#5e759d" points="64,-463 10,-463 10,-427 64,-427 64,-463"/>
+<text text-anchor="middle" x="37" y="-442.8" font-family="Arial" font-size="9.00">Docente</text>
+</g>
+<!-- teacher&#45;&gt;login -->
+<g id="edge2" class="edge">
+<title>teacher&#45;&gt;login</title>
+<path fill="none" stroke="#647a9b" d="M37.08,-426.7C37.08,-408.73 37.08,-384 37.08,-384 37.08,-384 169.95,-384 169.95,-384"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="169.95,-386.45 176.95,-384 169.95,-381.55 169.95,-386.45"/>
+</g>
+<!-- teacher&#45;&gt;academic -->
+<g id="edge12" class="edge">
+<title>teacher&#45;&gt;academic</title>
+<path fill="none" stroke="#647a9b" d="M64.14,-445C100.93,-445 162.08,-445 162.08,-445 162.08,-445 162.08,-339.57 162.08,-339.57"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="164.53,-339.57 162.08,-332.57 159.63,-339.57 164.53,-339.57"/>
+</g>
+<!-- teacher&#45;&gt;attend -->
+<g id="edge13" class="edge">
+<title>teacher&#45;&gt;attend</title>
+<path fill="none" stroke="#647a9b" d="M64.3,-436C83.61,-436 106.08,-436 106.08,-436 106.08,-436 106.08,-272.8 106.08,-272.8 106.08,-272.8 177.27,-272.8 177.27,-272.8"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="177.27,-275.25 184.27,-272.8 177.27,-270.35 177.27,-275.25"/>
+</g>
+<!-- tasks -->
+<g id="node9" class="node">
+<title>tasks</title>
+<ellipse fill="#f5f8fc" stroke="#5e759d" cx="229.54" cy="-689" rx="86.71" ry="18"/>
+<text text-anchor="middle" x="229.54" y="-686.8" font-family="Arial" font-size="9.00">Gestionar actividades y entregas</text>
+</g>
+<!-- teacher&#45;&gt;tasks -->
+<g id="edge14" class="edge">
+<title>teacher&#45;&gt;tasks</title>
+<path fill="none" stroke="#647a9b" d="M64.16,-458.5C77.22,-458.5 90.08,-458.5 90.08,-458.5 90.08,-458.5 90.08,-683 90.08,-683 90.08,-683 140.61,-683 140.61,-683"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="140.61,-685.45 147.61,-683 140.61,-680.55 140.61,-685.45"/>
+</g>
+<!-- teacher&#45;&gt;conv -->
+<g id="edge15" class="edge">
+<title>teacher&#45;&gt;conv</title>
+<path fill="none" stroke="#647a9b" d="M64.01,-431.5C73.61,-431.5 82.08,-431.5 82.08,-431.5 82.08,-431.5 82.08,-201 82.08,-201 82.08,-201 139.33,-201 139.33,-201"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="139.33,-203.45 146.33,-201 139.33,-198.55 139.33,-203.45"/>
+</g>
+<!-- collect -->
+<g id="node12" class="node">
+<title>collect</title>
+<ellipse fill="#f5f8fc" stroke="#5e759d" cx="229.54" cy="-506" rx="46.38" ry="18"/>
+<text text-anchor="middle" x="229.54" y="-503.8" font-family="Arial" font-size="9.00">Avisar recogida</text>
+</g>
+<!-- teacher&#45;&gt;collect -->
+<g id="edge16" class="edge">
+<title>teacher&#45;&gt;collect</title>
+<path fill="none" stroke="#647a9b" d="M46.08,-463.3C46.08,-481.27 46.08,-506 46.08,-506 46.08,-506 176.25,-506 176.25,-506"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="176.25,-508.45 183.25,-506 176.25,-503.55 176.25,-508.45"/>
+</g>
+<!-- teacher&#45;&gt;content -->
+<g id="edge17" class="edge">
+<title>teacher&#45;&gt;content</title>
+<path fill="none" stroke="#647a9b" d="M64.33,-449.5C91.16,-449.5 128.08,-449.5 128.08,-449.5 128.08,-449.5 128.08,-553.35 128.08,-553.35"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="125.63,-553.35 128.08,-560.35 130.53,-553.35 125.63,-553.35"/>
+</g>
+<!-- notif -->
+<g id="node14" class="node">
+<title>notif</title>
+<ellipse fill="#f5f8fc" stroke="#5e759d" cx="229.54" cy="-628" rx="66.29" ry="18"/>
+<text text-anchor="middle" x="229.54" y="-625.8" font-family="Arial" font-size="9.00">Consultar notificaciones</text>
+</g>
+<!-- teacher&#45;&gt;notif -->
+<g id="edge18" class="edge">
+<title>teacher&#45;&gt;notif</title>
+<path fill="none" stroke="#647a9b" d="M64.33,-454C80.59,-454 98.08,-454 98.08,-454 98.08,-454 98.08,-622 98.08,-622 98.08,-622 159.89,-622 159.89,-622"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="159.89,-624.45 166.89,-622 159.89,-619.55 159.89,-624.45"/>
+</g>
+<!-- parent -->
+<g id="node3" class="node">
+<title>parent</title>
+<polygon fill="#fff6dd" stroke="#5e759d" points="66,-585 8,-585 8,-549 66,-549 66,-585"/>
+<text text-anchor="middle" x="37" y="-564.8" font-family="Arial" font-size="9.00">Acudiente</text>
+</g>
+<!-- parent&#45;&gt;login -->
+<g id="edge3" class="edge">
+<title>parent&#45;&gt;login</title>
+<path fill="none" stroke="#647a9b" d="M66.14,-561C87.97,-561 114.08,-561 114.08,-561 114.08,-561 114.08,-393 114.08,-393 114.08,-393 176.91,-393 176.91,-393"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="176.91,-395.45 183.91,-393 176.91,-390.55 176.91,-395.45"/>
+</g>
+<!-- parent&#45;&gt;tasks -->
+<g id="edge19" class="edge">
+<title>parent&#45;&gt;tasks</title>
+<path fill="none" stroke="#647a9b" d="M28.08,-585.07C28.08,-620.35 28.08,-695 28.08,-695 28.08,-695 140.89,-695 140.89,-695"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="140.89,-697.45 147.89,-695 140.89,-692.55 140.89,-697.45"/>
+</g>
+<!-- parent&#45;&gt;bulletin -->
+<g id="edge20" class="edge">
+<title>parent&#45;&gt;bulletin</title>
+<path fill="none" stroke="#647a9b" d="M28.08,-548.91C28.08,-542.34 28.08,-536.5 28.08,-536.5 28.08,-536.5 178.08,-536.5 178.08,-536.5 178.08,-536.5 178.08,-460.77 178.08,-460.77"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="180.53,-460.77 178.08,-453.77 175.63,-460.77 180.53,-460.77"/>
+</g>
+<!-- parent&#45;&gt;content -->
+<g id="edge21" class="edge">
+<title>parent&#45;&gt;content</title>
+<path fill="none" stroke="#647a9b" d="M66.24,-573C66.24,-573 120.14,-573 120.14,-573"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="120.14,-575.45 127.14,-573 120.14,-570.55 120.14,-575.45"/>
+</g>
+<!-- parent&#45;&gt;notif -->
+<g id="edge22" class="edge">
+<title>parent&#45;&gt;notif</title>
+<path fill="none" stroke="#647a9b" d="M47.08,-585.31C47.08,-605.15 47.08,-634 47.08,-634 47.08,-634 159.75,-634 159.75,-634"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="159.75,-636.45 166.75,-634 159.75,-631.55 159.75,-636.45"/>
+</g>
+</g>
+</svg>
+</div><h4>1.4.2. Descripción de caso de uso</h4><table><thead><tr><th>ID</th><th>Nombre</th><th>Actor</th><th>Prerrequisitos</th><th>Flujo</th><th>Excepciones</th></tr></thead><tbody><tr><td>CU01</td><td>Autenticar usuario</td><td>Administrador/Docente/Acudiente</td><td>Cuenta registrada y API disponible.</td><td>1) Ingresar correo y contraseña. 2) Validar UI. 3) POST /auth/login/. 4) Buscar cuenta. 5) Verificar bcrypt. 6) Crear sesión. 7) Dirigir al panel.</td><td>401 por credenciales; error de conexión; rol sin destino.</td></tr><tr><td>CU02</td><td>Restaurar sesión</td><td>Todos</td><td>Token local existente.</td><td>1) Leer SharedPreferences. 2) GET /auth/session/. 3) Si es válida, reconstruir SesionUsuario. 4) Navegar al destino.</td><td>Token inválido o servidor reiniciado: limpiar sesión y volver a login.</td></tr><tr><td>CU03</td><td>Gestionar estudiante</td><td>Administrador</td><td>Sesión de admin.</td><td>Consultar, registrar y revisar estudiantes.</td><td>La edición existente no persiste actualmente según documentación técnica.</td></tr><tr><td>CU04</td><td>Gestionar evaluación</td><td>Docente/Administrador</td><td>Estudiante y curso válidos.</td><td>Registrar calificación 0..5 o logro/observación según grado y consultar.</td><td>Payload inválido: 422; periodo fuera de I-IV: 422.</td></tr><tr><td>CU05</td><td>Registrar asistencia</td><td>Docente/Administrador</td><td>Estudiante/curso existentes.</td><td>Registrar estado para fecha no futura.</td><td>Fecha futura: 400.</td></tr><tr><td>CU06</td><td>Gestionar actividad</td><td>Docente</td><td>Curso existente.</td><td>Crear tarea, descripción, fecha límite y permiso de video.</td><td>Datos faltantes: 422; curso inexistente: 404.</td></tr><tr><td>CU07</td><td>Entregar actividad</td><td>Acudiente</td><td>Actividad vigente; estudiante y acudiente válidos.</td><td>Multipart: archivo + comentario; validar plazo/tipo/tamaño; guardar; notificar docente.</td><td>400 por plazo/formato/video/tamaño; 404 por IDs; duplicado por UNIQUE.</td></tr><tr><td>CU08</td><td>Calificar entrega</td><td>Docente</td><td>Entrega existente.</td><td>Registrar nota y retroalimentación.</td><td>404 si no existe; 422 por nota fuera de rango.</td></tr><tr><td>CU09</td><td>Gestionar convivencia</td><td>Docente/Administrador</td><td>Estudiante existente.</td><td>Crear situación, consultar, actualizar seguimiento o eliminar.</td><td>404 si id inexistente.</td></tr><tr><td>CU10</td><td>Atender alerta</td><td>Administrador</td><td>Alerta existente.</td><td>Marcar atendida y guardar respuesta.</td><td>404 si no existe; 401/403 según sesión.</td></tr><tr><td>CU11</td><td>Avisar recogida</td><td>Docente</td><td>Curso existente.</td><td>Registrar clase finalizada, crear notificaciones a acudientes y preparar WhatsApp.</td><td>Curso inexistente; estudiante/acudiente sin relación.</td></tr><tr><td>CU12</td><td>Generar boletín</td><td>Administrador/Acudiente</td><td>Estudiante y firmas requeridas.</td><td>GET /estudiantes/{id}/boletin/; backend construye PDF con ReportLab.</td><td>No generar si falta firma requerida.</td></tr><tr><td>CU13</td><td>Gestionar materiales</td><td>Docente/Administrador/Acudiente</td><td>Curso existente.</td><td>Subir/listar/eliminar o consultar material.</td><td>Formato/tamaño de archivo según endpoint.</td></tr><tr><td>CU14</td><td>Gestionar horario</td><td>Administrador/Docente/Acudiente</td><td>Curso existente.</td><td>Crear/listar/eliminar bloque por día y hora.</td><td>Duplicidades o datos inválidos.</td></tr><tr><td>CU15</td><td>Gestionar calendario</td><td>Administrador/usuarios consulta</td><td>Sesión.</td><td>Crear/listar/eliminar eventos.</td><td>Id inexistente.</td></tr><tr><td>CU16</td><td>Consultar reportes</td><td>Administrador</td><td>Sesión de administrador.</td><td>Consultar estadísticas y reporte diario de asistencia.</td><td>Error de BD / filtros inválidos.</td></tr></tbody></table><h3>1.5. MODELO DE DISEÑO DEL SISTEMA</h3><h4>1.5.1. Diagrama de clases detallado</h4><div class="diagram"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.42.4 (0)
+ -->
+<!-- Title: G Pages: 1 -->
+<svg width="1038pt" height="362pt"
+ viewBox="0.00 0.00 1038.00 362.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 358)">
+<title>G</title>
+<!-- auth -->
+<g id="node1" class="node">
+<title>auth</title>
+<path fill="#f5f8fc" stroke="#5e759d" d="M12,-195C12,-195 217,-195 217,-195 223,-195 229,-201 229,-207 229,-207 229,-235 229,-235 229,-241 223,-247 217,-247 217,-247 12,-247 12,-247 6,-247 0,-241 0,-235 0,-235 0,-207 0,-207 0,-201 6,-195 12,-195"/>
+<text text-anchor="middle" x="35" y="-218.5" font-family="Arial" font-size="10.00">AuthService</text>
+<polyline fill="none" stroke="#5e759d" points="70,-195 70,-247 "/>
+<text text-anchor="start" x="78" y="-235" font-family="Arial" font-size="10.00">+ iniciarSesion(correo,password)</text>
+<text text-anchor="start" x="78" y="-224" font-family="Arial" font-size="10.00">+ cerrarSesion()</text>
+<text text-anchor="start" x="78" y="-213" font-family="Arial" font-size="10.00">+ restaurarSesion()</text>
+<text text-anchor="start" x="78" y="-202" font-family="Arial" font-size="10.00">+ recordarSesion()</text>
+</g>
+<!-- student -->
+<g id="node2" class="node">
+<title>student</title>
+<path fill="#f5f8fc" stroke="#5e759d" d="M338.5,-189.5C338.5,-189.5 445.5,-189.5 445.5,-189.5 451.5,-189.5 457.5,-195.5 457.5,-201.5 457.5,-201.5 457.5,-240.5 457.5,-240.5 457.5,-246.5 451.5,-252.5 445.5,-252.5 445.5,-252.5 338.5,-252.5 338.5,-252.5 332.5,-252.5 326.5,-246.5 326.5,-240.5 326.5,-240.5 326.5,-201.5 326.5,-201.5 326.5,-195.5 332.5,-189.5 338.5,-189.5"/>
+<text text-anchor="middle" x="358" y="-218.5" font-family="Arial" font-size="10.00">Estudiante</text>
+<polyline fill="none" stroke="#5e759d" points="389.5,-189.5 389.5,-252.5 "/>
+<text text-anchor="start" x="397.5" y="-240.5" font-family="Arial" font-size="10.00">+ id</text>
+<text text-anchor="start" x="397.5" y="-229.5" font-family="Arial" font-size="10.00">+ nombre</text>
+<text text-anchor="start" x="397.5" y="-218.5" font-family="Arial" font-size="10.00">+ correo</text>
+<text text-anchor="start" x="397.5" y="-207.5" font-family="Arial" font-size="10.00">+ grado</text>
+<text text-anchor="start" x="397.5" y="-196.5" font-family="Arial" font-size="10.00">+ acudiente</text>
+</g>
+<!-- auth&#45;&gt;student -->
+<g id="edge1" class="edge">
+<title>auth&#45;&gt;student</title>
+<path fill="none" stroke="#647a9b" d="M229.37,-221C229.37,-221 319.44,-221 319.44,-221"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="319.44,-223.45 326.44,-221 319.44,-218.55 319.44,-223.45"/>
+<text text-anchor="middle" x="273" y="-224.8" font-family="Times,serif" font-size="14.00">sesión</text>
+</g>
+<!-- academic -->
+<g id="node4" class="node">
+<title>academic</title>
+<path fill="#f5f8fc" stroke="#5e759d" d="M597,-186.5C597,-186.5 754,-186.5 754,-186.5 760,-186.5 766,-192.5 766,-198.5 766,-198.5 766,-259.5 766,-259.5 766,-265.5 760,-271.5 754,-271.5 754,-271.5 597,-271.5 597,-271.5 591,-271.5 585,-265.5 585,-259.5 585,-259.5 585,-198.5 585,-198.5 585,-192.5 591,-186.5 597,-186.5"/>
+<text text-anchor="middle" x="636" y="-226.5" font-family="Arial" font-size="10.00">RegistroAcademico</text>
+<polyline fill="none" stroke="#5e759d" points="687,-186.5 687,-271.5 "/>
+<text text-anchor="start" x="695" y="-259.5" font-family="Arial" font-size="10.00">+ id</text>
+<text text-anchor="start" x="695" y="-248.5" font-family="Arial" font-size="10.00">+ estudianteId</text>
+<text text-anchor="start" x="695" y="-237.5" font-family="Arial" font-size="10.00">+ materia</text>
+<text text-anchor="start" x="695" y="-226.5" font-family="Arial" font-size="10.00">+ tipo</text>
+<text text-anchor="start" x="695" y="-215.5" font-family="Arial" font-size="10.00">+ titulo</text>
+<text text-anchor="start" x="695" y="-204.5" font-family="Arial" font-size="10.00">+ descripcion</text>
+<text text-anchor="start" x="695" y="-193.5" font-family="Arial" font-size="10.00">+ calificacion</text>
+</g>
+<!-- student&#45;&gt;academic -->
+<g id="edge5" class="edge">
+<title>student&#45;&gt;academic</title>
+<path fill="none" stroke="#647a9b" d="M457.75,-237C457.75,-237 577.87,-237 577.87,-237"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="577.87,-239.45 584.87,-237 577.87,-234.55 577.87,-239.45"/>
+<text text-anchor="middle" x="513" y="-232.8" font-family="Times,serif" font-size="14.00">tiene</text>
+</g>
+<!-- delivery -->
+<g id="node6" class="node">
+<title>delivery</title>
+<path fill="#f5f8fc" stroke="#5e759d" d="M612.5,-0.5C612.5,-0.5 738.5,-0.5 738.5,-0.5 744.5,-0.5 750.5,-6.5 750.5,-12.5 750.5,-12.5 750.5,-73.5 750.5,-73.5 750.5,-79.5 744.5,-85.5 738.5,-85.5 738.5,-85.5 612.5,-85.5 612.5,-85.5 606.5,-85.5 600.5,-79.5 600.5,-73.5 600.5,-73.5 600.5,-12.5 600.5,-12.5 600.5,-6.5 606.5,-0.5 612.5,-0.5"/>
+<text text-anchor="middle" x="625.5" y="-40.5" font-family="Arial" font-size="10.00">Entrega</text>
+<polyline fill="none" stroke="#5e759d" points="650.5,-0.5 650.5,-85.5 "/>
+<text text-anchor="start" x="658.5" y="-73.5" font-family="Arial" font-size="10.00">+ id</text>
+<text text-anchor="start" x="658.5" y="-62.5" font-family="Arial" font-size="10.00">+ actividadId</text>
+<text text-anchor="start" x="658.5" y="-51.5" font-family="Arial" font-size="10.00">+ estudianteId</text>
+<text text-anchor="start" x="658.5" y="-40.5" font-family="Arial" font-size="10.00">+ estado</text>
+<text text-anchor="start" x="658.5" y="-29.5" font-family="Arial" font-size="10.00">+ archivoUrl</text>
+<text text-anchor="start" x="658.5" y="-18.5" font-family="Arial" font-size="10.00">+ nota</text>
+<text text-anchor="start" x="658.5" y="-7.5" font-family="Arial" font-size="10.00">+ retroalimentacion</text>
+</g>
+<!-- student&#45;&gt;delivery -->
+<g id="edge4" class="edge">
+<title>student&#45;&gt;delivery</title>
+<path fill="none" stroke="#647a9b" d="M457.81,-205C486.19,-205 513,-205 513,-205 513,-205 513,-55.5 513,-55.5 513,-55.5 593.43,-55.5 593.43,-55.5"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="593.43,-57.95 600.43,-55.5 593.43,-53.05 593.43,-57.95"/>
+<text text-anchor="middle" x="513" y="-93.8" font-family="Times,serif" font-size="14.00">entrega</text>
+</g>
+<!-- conviv -->
+<g id="node7" class="node">
+<title>conviv</title>
+<path fill="#f5f8fc" stroke="#5e759d" d="M571,-104.5C571,-104.5 780,-104.5 780,-104.5 786,-104.5 792,-110.5 792,-116.5 792,-116.5 792,-155.5 792,-155.5 792,-161.5 786,-167.5 780,-167.5 780,-167.5 571,-167.5 571,-167.5 565,-167.5 559,-161.5 559,-155.5 559,-155.5 559,-116.5 559,-116.5 559,-110.5 565,-104.5 571,-104.5"/>
+<text text-anchor="middle" x="614.5" y="-133.5" font-family="Arial" font-size="10.00">SituacionConvivencia</text>
+<polyline fill="none" stroke="#5e759d" points="670,-104.5 670,-167.5 "/>
+<text text-anchor="start" x="678" y="-155.5" font-family="Arial" font-size="10.00">+ id</text>
+<text text-anchor="start" x="678" y="-144.5" font-family="Arial" font-size="10.00">+ estudianteId</text>
+<text text-anchor="start" x="678" y="-133.5" font-family="Arial" font-size="10.00">+ tipo</text>
+<text text-anchor="start" x="678" y="-122.5" font-family="Arial" font-size="10.00">+ titulo</text>
+<text text-anchor="start" x="678" y="-111.5" font-family="Arial" font-size="10.00">+ seguimientoRealizado</text>
+</g>
+<!-- student&#45;&gt;conviv -->
+<g id="edge6" class="edge">
+<title>student&#45;&gt;conviv</title>
+<path fill="none" stroke="#647a9b" d="M457.75,-221C509.17,-221 572,-221 572,-221 572,-221 572,-174.65 572,-174.65"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="574.45,-174.65 572,-167.65 569.55,-174.65 574.45,-174.65"/>
+<text text-anchor="middle" x="513" y="-139.8" font-family="Times,serif" font-size="14.00">tiene</text>
+</g>
+<!-- alert -->
+<g id="node8" class="node">
+<title>alert</title>
+<path fill="#f5f8fc" stroke="#5e759d" d="M602,-290.5C602,-290.5 749,-290.5 749,-290.5 755,-290.5 761,-296.5 761,-302.5 761,-302.5 761,-341.5 761,-341.5 761,-347.5 755,-353.5 749,-353.5 749,-353.5 602,-353.5 602,-353.5 596,-353.5 590,-347.5 590,-341.5 590,-341.5 590,-302.5 590,-302.5 590,-296.5 596,-290.5 602,-290.5"/>
+<text text-anchor="middle" x="627.5" y="-319.5" font-family="Arial" font-size="10.00">AlertaAlumno</text>
+<polyline fill="none" stroke="#5e759d" points="665,-290.5 665,-353.5 "/>
+<text text-anchor="start" x="673" y="-341.5" font-family="Arial" font-size="10.00">+ id</text>
+<text text-anchor="start" x="673" y="-330.5" font-family="Arial" font-size="10.00">+ estudianteId</text>
+<text text-anchor="start" x="673" y="-319.5" font-family="Arial" font-size="10.00">+ severidad</text>
+<text text-anchor="start" x="673" y="-308.5" font-family="Arial" font-size="10.00">+ atendida</text>
+<text text-anchor="start" x="673" y="-297.5" font-family="Arial" font-size="10.00">+ respuestaAdmin</text>
+</g>
+<!-- student&#45;&gt;alert -->
+<g id="edge7" class="edge">
+<title>student&#45;&gt;alert</title>
+<path fill="none" stroke="#647a9b" d="M392,-252.68C392,-282.3 392,-322 392,-322 392,-322 582.67,-322 582.67,-322"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="582.67,-324.45 589.67,-322 582.67,-319.55 582.67,-324.45"/>
+<text text-anchor="middle" x="513" y="-325.8" font-family="Times,serif" font-size="14.00">recibe</text>
+</g>
+<!-- teacher -->
+<g id="node3" class="node">
+<title>teacher</title>
+<path fill="#f5f8fc" stroke="#5e759d" d="M50.5,-68.5C50.5,-68.5 178.5,-68.5 178.5,-68.5 184.5,-68.5 190.5,-74.5 190.5,-80.5 190.5,-80.5 190.5,-119.5 190.5,-119.5 190.5,-125.5 184.5,-131.5 178.5,-131.5 178.5,-131.5 50.5,-131.5 50.5,-131.5 44.5,-131.5 38.5,-125.5 38.5,-119.5 38.5,-119.5 38.5,-80.5 38.5,-80.5 38.5,-74.5 44.5,-68.5 50.5,-68.5"/>
+<text text-anchor="middle" x="64" y="-97.5" font-family="Arial" font-size="10.00">Teacher</text>
+<polyline fill="none" stroke="#5e759d" points="89.5,-68.5 89.5,-131.5 "/>
+<text text-anchor="start" x="97.5" y="-119.5" font-family="Arial" font-size="10.00">+ id</text>
+<text text-anchor="start" x="97.5" y="-108.5" font-family="Arial" font-size="10.00">+ nombre</text>
+<text text-anchor="start" x="97.5" y="-97.5" font-family="Arial" font-size="10.00">+ correo</text>
+<text text-anchor="start" x="97.5" y="-86.5" font-family="Arial" font-size="10.00">+ especialidad</text>
+<text text-anchor="start" x="97.5" y="-75.5" font-family="Arial" font-size="10.00">+ gradosAsignados</text>
+</g>
+<!-- activity -->
+<g id="node5" class="node">
+<title>activity</title>
+<path fill="#f5f8fc" stroke="#5e759d" d="M334,-6C334,-6 450,-6 450,-6 456,-6 462,-12 462,-18 462,-18 462,-68 462,-68 462,-74 456,-80 450,-80 450,-80 334,-80 334,-80 328,-80 322,-74 322,-68 322,-68 322,-18 322,-18 322,-12 328,-6 334,-6"/>
+<text text-anchor="middle" x="350.5" y="-40.5" font-family="Arial" font-size="10.00">Actividad</text>
+<polyline fill="none" stroke="#5e759d" points="379,-6 379,-80 "/>
+<text text-anchor="start" x="387" y="-68" font-family="Arial" font-size="10.00">+ id</text>
+<text text-anchor="start" x="387" y="-57" font-family="Arial" font-size="10.00">+ cursoId</text>
+<text text-anchor="start" x="387" y="-46" font-family="Arial" font-size="10.00">+ titulo</text>
+<text text-anchor="start" x="387" y="-35" font-family="Arial" font-size="10.00">+ descripcion</text>
+<text text-anchor="start" x="387" y="-24" font-family="Arial" font-size="10.00">+ fechaEntrega</text>
+<text text-anchor="start" x="387" y="-13" font-family="Arial" font-size="10.00">+ permiteVideo</text>
+</g>
+<!-- teacher&#45;&gt;activity -->
+<g id="edge2" class="edge">
+<title>teacher&#45;&gt;activity</title>
+<path fill="none" stroke="#647a9b" d="M190.7,-74.25C190.7,-74.25 314.68,-74.25 314.68,-74.25"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="314.68,-76.7 321.68,-74.25 314.68,-71.8 314.68,-76.7"/>
+<text text-anchor="middle" x="273" y="-71.8" font-family="Times,serif" font-size="14.00">crea</text>
+</g>
+<!-- material -->
+<g id="node9" class="node">
+<title>material</title>
+<path fill="#f5f8fc" stroke="#5e759d" d="M329,-99.5C329,-99.5 455,-99.5 455,-99.5 461,-99.5 467,-105.5 467,-111.5 467,-111.5 467,-150.5 467,-150.5 467,-156.5 461,-162.5 455,-162.5 455,-162.5 329,-162.5 329,-162.5 323,-162.5 317,-156.5 317,-150.5 317,-150.5 317,-111.5 317,-111.5 317,-105.5 323,-99.5 329,-99.5"/>
+<text text-anchor="middle" x="363" y="-128.5" font-family="Arial" font-size="10.00">MaterialDidactico</text>
+<polyline fill="none" stroke="#5e759d" points="409,-99.5 409,-162.5 "/>
+<text text-anchor="start" x="417" y="-150.5" font-family="Arial" font-size="10.00">+ id</text>
+<text text-anchor="start" x="417" y="-139.5" font-family="Arial" font-size="10.00">+ titulo</text>
+<text text-anchor="start" x="417" y="-128.5" font-family="Arial" font-size="10.00">+ grado</text>
+<text text-anchor="start" x="417" y="-117.5" font-family="Arial" font-size="10.00">+ materia</text>
+<text text-anchor="start" x="417" y="-106.5" font-family="Arial" font-size="10.00">+ enlace</text>
+</g>
+<!-- teacher&#45;&gt;material -->
+<g id="edge8" class="edge">
+<title>teacher&#45;&gt;material</title>
+<path fill="none" stroke="#647a9b" d="M190.7,-115.5C190.7,-115.5 309.94,-115.5 309.94,-115.5"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="309.94,-117.95 316.94,-115.5 309.94,-113.05 309.94,-117.95"/>
+<text text-anchor="middle" x="273" y="-134.8" font-family="Times,serif" font-size="14.00">publica</text>
+</g>
+<!-- activity&#45;&gt;delivery -->
+<g id="edge3" class="edge">
+<title>activity&#45;&gt;delivery</title>
+<path fill="none" stroke="#647a9b" d="M462.08,-30.5C462.08,-30.5 593.27,-30.5 593.27,-30.5"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="593.27,-32.95 600.27,-30.5 593.27,-28.05 593.27,-32.95"/>
+<text text-anchor="middle" x="513" y="-46.8" font-family="Times,serif" font-size="14.00">recibe</text>
+</g>
+<!-- notif -->
+<g id="node10" class="node">
+<title>notif</title>
+<path fill="#f5f8fc" stroke="#5e759d" d="M890,-6C890,-6 1018,-6 1018,-6 1024,-6 1030,-12 1030,-18 1030,-18 1030,-68 1030,-68 1030,-74 1024,-80 1018,-80 1018,-80 890,-80 890,-80 884,-80 878,-74 878,-68 878,-68 878,-18 878,-18 878,-12 884,-6 890,-6"/>
+<text text-anchor="middle" x="912" y="-40.5" font-family="Arial" font-size="10.00">Notificacion</text>
+<polyline fill="none" stroke="#5e759d" points="946,-6 946,-80 "/>
+<text text-anchor="start" x="954" y="-68" font-family="Arial" font-size="10.00">+ id</text>
+<text text-anchor="start" x="954" y="-57" font-family="Arial" font-size="10.00">+ rol</text>
+<text text-anchor="start" x="954" y="-46" font-family="Arial" font-size="10.00">+ destinatarioId</text>
+<text text-anchor="start" x="954" y="-35" font-family="Arial" font-size="10.00">+ titulo</text>
+<text text-anchor="start" x="954" y="-24" font-family="Arial" font-size="10.00">+ mensaje</text>
+<text text-anchor="start" x="954" y="-13" font-family="Arial" font-size="10.00">+ leida</text>
+</g>
+<!-- delivery&#45;&gt;notif -->
+<g id="edge9" class="edge">
+<title>delivery&#45;&gt;notif</title>
+<path fill="none" stroke="#647a9b" d="M750.87,-43C750.87,-43 870.61,-43 870.61,-43"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="870.61,-45.45 877.61,-43 870.61,-40.55 870.61,-45.45"/>
+<text text-anchor="middle" x="835" y="-46.8" font-family="Times,serif" font-size="14.00">genera</text>
+</g>
+</g>
+</svg>
+</div><h4>1.5.2. Diagramas de secuencias</h4><h5>Autenticación</h5><div class="diagram"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.42.4 (0)
+ -->
+<!-- Title: G Pages: 1 -->
+<svg width="491pt" height="479pt"
+ viewBox="0.00 0.00 491.00 479.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 475)">
+<title>G</title>
+<!-- U -->
+<g id="node1" class="node">
+<title>U</title>
+<path fill="#f5f8fc" stroke="#5e759d" d="M194,-471C194,-471 164,-471 164,-471 158,-471 152,-465 152,-459 152,-459 152,-447 152,-447 152,-441 158,-435 164,-435 164,-435 194,-435 194,-435 200,-435 206,-441 206,-447 206,-447 206,-459 206,-459 206,-465 200,-471 194,-471"/>
+<text text-anchor="middle" x="179" y="-450.5" font-family="Arial" font-size="10.00">Usuario</text>
+</g>
+<!-- UI -->
+<g id="node2" class="node">
+<title>UI</title>
+<path fill="#f5f8fc" stroke="#5e759d" d="M202.5,-384C202.5,-384 155.5,-384 155.5,-384 149.5,-384 143.5,-378 143.5,-372 143.5,-372 143.5,-360 143.5,-360 143.5,-354 149.5,-348 155.5,-348 155.5,-348 202.5,-348 202.5,-348 208.5,-348 214.5,-354 214.5,-360 214.5,-360 214.5,-372 214.5,-372 214.5,-378 208.5,-384 202.5,-384"/>
+<text text-anchor="middle" x="179" y="-363.5" font-family="Arial" font-size="10.00">LoginScreen</text>
+</g>
+<!-- U&#45;&gt;UI -->
+<g id="edge1" class="edge">
+<title>U&#45;&gt;UI</title>
+<path fill="none" stroke="#647a9b" d="M151.99,-448.45C132.81,-444.37 108.37,-435.63 96,-417 83.26,-397.8 107.92,-384.83 133.61,-376.92"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="134.76,-380.23 143.43,-374.13 132.85,-373.5 134.76,-380.23"/>
+<text text-anchor="middle" x="169" y="-405.8" font-family="Times,serif" font-size="14.00">correo + contraseña</text>
+</g>
+<!-- UI&#45;&gt;U -->
+<g id="edge9" class="edge">
+<title>UI&#45;&gt;U</title>
+<path fill="none" stroke="#647a9b" d="M214.75,-379.26C233.78,-387.93 251.49,-400.87 242,-417 235.96,-427.26 225.71,-434.73 215.22,-440.06"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="213.7,-436.91 206.03,-444.22 216.58,-443.29 213.7,-436.91"/>
+<text text-anchor="middle" x="302" y="-405.8" font-family="Times,serif" font-size="14.00">panel o mensaje</text>
+</g>
+<!-- A -->
+<g id="node3" class="node">
+<title>A</title>
+<path fill="#f5f8fc" stroke="#5e759d" d="M231,-297C231,-297 127,-297 127,-297 121,-297 115,-291 115,-285 115,-285 115,-273 115,-273 115,-267 121,-261 127,-261 127,-261 231,-261 231,-261 237,-261 243,-267 243,-273 243,-273 243,-285 243,-285 243,-291 237,-297 231,-297"/>
+<text text-anchor="middle" x="179" y="-276.5" font-family="Arial" font-size="10.00">AuthService.iniciarSesion</text>
+</g>
+<!-- UI&#45;&gt;A -->
+<g id="edge2" class="edge">
+<title>UI&#45;&gt;A</title>
+<path fill="none" stroke="#647a9b" d="M143.37,-356.48C129.54,-351.24 115.11,-342.96 107,-330 100.05,-318.89 105.92,-309.6 116.77,-302.16"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="118.59,-305.15 125.44,-297.07 115.05,-299.11 118.59,-305.15"/>
+<text text-anchor="middle" x="169" y="-318.8" font-family="Times,serif" font-size="14.00">validar + invocar</text>
+</g>
+<!-- A&#45;&gt;UI -->
+<g id="edge8" class="edge">
+<title>A&#45;&gt;UI</title>
+<path fill="none" stroke="#647a9b" d="M215.11,-297.23C227.96,-305.91 237.77,-317.29 231,-330 228.81,-334.11 225.9,-337.82 222.58,-341.16"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="220.06,-338.7 214.74,-347.86 224.61,-344.02 220.06,-338.7"/>
+<text text-anchor="middle" x="310" y="-318.8" font-family="Times,serif" font-size="14.00">SesionUsuario / error</text>
+</g>
+<!-- API -->
+<g id="node4" class="node">
+<title>API</title>
+<path fill="#f5f8fc" stroke="#5e759d" d="M214.5,-210C214.5,-210 143.5,-210 143.5,-210 137.5,-210 131.5,-204 131.5,-198 131.5,-198 131.5,-186 131.5,-186 131.5,-180 137.5,-174 143.5,-174 143.5,-174 214.5,-174 214.5,-174 220.5,-174 226.5,-180 226.5,-186 226.5,-186 226.5,-198 226.5,-198 226.5,-204 220.5,-210 214.5,-210"/>
+<text text-anchor="middle" x="179" y="-189.5" font-family="Arial" font-size="10.00">POST /auth/login/</text>
+</g>
+<!-- A&#45;&gt;API -->
+<g id="edge3" class="edge">
+<title>A&#45;&gt;API</title>
+<path fill="none" stroke="#647a9b" d="M114.85,-269.07C100.09,-263.87 86.08,-255.72 77,-243 61.59,-221.42 90.5,-208.72 121.43,-201.52"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="122.44,-204.88 131.49,-199.37 120.98,-198.04 122.44,-204.88"/>
+<text text-anchor="middle" x="169" y="-231.8" font-family="Times,serif" font-size="14.00">HTTP POST / timeout 45s</text>
+</g>
+<!-- API&#45;&gt;A -->
+<g id="edge7" class="edge">
+<title>API&#45;&gt;A</title>
+<path fill="none" stroke="#647a9b" d="M226.62,-203.9C250.95,-211.91 273.13,-224.63 261,-243 258.04,-247.49 254.37,-251.4 250.24,-254.81"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="247.95,-252.15 241.8,-260.78 251.99,-257.86 247.95,-252.15"/>
+<text text-anchor="middle" x="283.5" y="-231.8" font-family="Times,serif" font-size="14.00">JSON</text>
+</g>
+<!-- DB -->
+<g id="node5" class="node">
+<title>DB</title>
+<path fill="#f5f8fc" stroke="#5e759d" d="M158,-123C158,-123 12,-123 12,-123 6,-123 0,-117 0,-111 0,-111 0,-99 0,-99 0,-93 6,-87 12,-87 12,-87 158,-87 158,-87 164,-87 170,-93 170,-99 170,-99 170,-111 170,-111 170,-117 164,-123 158,-123"/>
+<text text-anchor="middle" x="85" y="-102.5" font-family="Arial" font-size="10.00">buscar_cuenta_por_correo + bcrypt</text>
+</g>
+<!-- API&#45;&gt;DB -->
+<g id="edge4" class="edge">
+<title>API&#45;&gt;DB</title>
+<path fill="none" stroke="#647a9b" d="M131.38,-187.38C110.21,-183.12 87.15,-174.24 74,-156 69.12,-149.23 69.3,-140.71 71.48,-132.62"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="74.8,-133.72 74.93,-123.13 68.23,-131.33 74.8,-133.72"/>
+<text text-anchor="middle" x="172.5" y="-144.8" font-family="Times,serif" font-size="14.00">consultar / verify_password</text>
+</g>
+<!-- S -->
+<g id="node6" class="node">
+<title>S</title>
+<path fill="#f5f8fc" stroke="#5e759d" d="M240,-36C240,-36 142,-36 142,-36 136,-36 130,-30 130,-24 130,-24 130,-12 130,-12 130,-6 136,0 142,0 142,0 240,0 240,0 246,0 252,-6 252,-12 252,-12 252,-24 252,-24 252,-30 246,-36 240,-36"/>
+<text text-anchor="middle" x="191" y="-15.5" font-family="Arial" font-size="10.00">sesiones[access_token]</text>
+</g>
+<!-- DB&#45;&gt;S -->
+<g id="edge5" class="edge">
+<title>DB&#45;&gt;S</title>
+<path fill="none" stroke="#647a9b" d="M94.21,-86.58C100.41,-76.12 109.38,-63.11 120,-54 125.59,-49.2 131.96,-44.88 138.53,-41.04"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="140.46,-43.97 147.56,-36.11 137.1,-37.83 140.46,-43.97"/>
+<text text-anchor="middle" x="195.5" y="-57.8" font-family="Times,serif" font-size="14.00">crear sesión si válido</text>
+</g>
+<!-- S&#45;&gt;API -->
+<g id="edge6" class="edge">
+<title>S&#45;&gt;API</title>
+<path fill="none" stroke="#647a9b" d="M251.9,-36.22C259.45,-40.82 266.19,-46.64 271,-54 295.81,-91.94 296.73,-118.68 271,-156 262.72,-168 249.75,-175.89 236.12,-181.08"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="235.01,-177.76 226.63,-184.25 237.23,-184.4 235.01,-177.76"/>
+<text text-anchor="middle" x="386" y="-101.3" font-family="Times,serif" font-size="14.00">access_token + rol + datos</text>
+</g>
+</g>
+</svg>
+</div><h5>Entrega</h5><div class="diagram"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.42.4 (0)
+ -->
+<!-- Title: G Pages: 1 -->
+<svg width="174pt" height="620pt"
+ viewBox="0.00 0.00 174.00 620.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 616)">
+<title>G</title>
+<!-- P -->
+<g id="node1" class="node">
+<title>P</title>
+<path fill="#fff9ea" stroke="#b38d2e" d="M101,-612C101,-612 65,-612 65,-612 59,-612 53,-606 53,-600 53,-600 53,-588 53,-588 53,-582 59,-576 65,-576 65,-576 101,-576 101,-576 107,-576 113,-582 113,-588 113,-588 113,-600 113,-600 113,-606 107,-612 101,-612"/>
+<text text-anchor="middle" x="83" y="-591.5" font-family="Arial" font-size="10.00">Acudiente</text>
+</g>
+<!-- UI -->
+<g id="node2" class="node">
+<title>UI</title>
+<path fill="#fff9ea" stroke="#b38d2e" d="M118,-540C118,-540 48,-540 48,-540 42,-540 36,-534 36,-528 36,-528 36,-516 36,-516 36,-510 42,-504 48,-504 48,-504 118,-504 118,-504 124,-504 130,-510 130,-516 130,-516 130,-528 130,-528 130,-534 124,-540 118,-540"/>
+<text text-anchor="middle" x="83" y="-519.5" font-family="Arial" font-size="10.00">Pantalla actividad</text>
+</g>
+<!-- P&#45;&gt;UI -->
+<g id="edge1" class="edge">
+<title>P&#45;&gt;UI</title>
+<path fill="none" stroke="#7b6b43" d="M83,-575.7C83,-567.98 83,-558.71 83,-550.11"/>
+<polygon fill="#7b6b43" stroke="#7b6b43" points="86.5,-550.1 83,-540.1 79.5,-550.1 86.5,-550.1"/>
+</g>
+<!-- API -->
+<g id="node3" class="node">
+<title>API</title>
+<path fill="#fff9ea" stroke="#b38d2e" d="M139.5,-468C139.5,-468 26.5,-468 26.5,-468 20.5,-468 14.5,-462 14.5,-456 14.5,-456 14.5,-444 14.5,-444 14.5,-438 20.5,-432 26.5,-432 26.5,-432 139.5,-432 139.5,-432 145.5,-432 151.5,-438 151.5,-444 151.5,-444 151.5,-456 151.5,-456 151.5,-462 145.5,-468 139.5,-468"/>
+<text text-anchor="middle" x="83" y="-447.5" font-family="Arial" font-size="10.00">POST /tareas/{id}/entregas/</text>
+</g>
+<!-- UI&#45;&gt;API -->
+<g id="edge2" class="edge">
+<title>UI&#45;&gt;API</title>
+<path fill="none" stroke="#7b6b43" d="M83,-503.7C83,-495.98 83,-486.71 83,-478.11"/>
+<polygon fill="#7b6b43" stroke="#7b6b43" points="86.5,-478.1 83,-468.1 79.5,-478.1 86.5,-478.1"/>
+</g>
+<!-- R -->
+<g id="node4" class="node">
+<title>R</title>
+<path fill="#fff9ea" stroke="#b38d2e" d="M122.5,-396C122.5,-396 43.5,-396 43.5,-396 37.5,-396 31.5,-390 31.5,-384 31.5,-384 31.5,-372 31.5,-372 31.5,-366 37.5,-360 43.5,-360 43.5,-360 122.5,-360 122.5,-360 128.5,-360 134.5,-366 134.5,-372 134.5,-372 134.5,-384 134.5,-384 134.5,-390 128.5,-396 122.5,-396"/>
+<text text-anchor="middle" x="83" y="-375.5" font-family="Arial" font-size="10.00">Validar plazo / tarea</text>
+</g>
+<!-- API&#45;&gt;R -->
+<g id="edge3" class="edge">
+<title>API&#45;&gt;R</title>
+<path fill="none" stroke="#7b6b43" d="M83,-431.7C83,-423.98 83,-414.71 83,-406.11"/>
+<polygon fill="#7b6b43" stroke="#7b6b43" points="86.5,-406.1 83,-396.1 79.5,-406.1 86.5,-406.1"/>
+</g>
+<!-- V -->
+<g id="node5" class="node">
+<title>V</title>
+<path fill="#fff9ea" stroke="#b38d2e" d="M144.5,-324C144.5,-324 21.5,-324 21.5,-324 15.5,-324 9.5,-318 9.5,-312 9.5,-312 9.5,-300 9.5,-300 9.5,-294 15.5,-288 21.5,-288 21.5,-288 144.5,-288 144.5,-288 150.5,-288 156.5,-294 156.5,-300 156.5,-300 156.5,-312 156.5,-312 156.5,-318 150.5,-324 144.5,-324"/>
+<text text-anchor="middle" x="83" y="-303.5" font-family="Arial" font-size="10.00">Validar estudiante y acudiente</text>
+</g>
+<!-- R&#45;&gt;V -->
+<g id="edge4" class="edge">
+<title>R&#45;&gt;V</title>
+<path fill="none" stroke="#7b6b43" d="M83,-359.7C83,-351.98 83,-342.71 83,-334.11"/>
+<polygon fill="#7b6b43" stroke="#7b6b43" points="86.5,-334.1 83,-324.1 79.5,-334.1 86.5,-334.1"/>
+</g>
+<!-- F -->
+<g id="node6" class="node">
+<title>F</title>
+<path fill="#fff9ea" stroke="#b38d2e" d="M154,-252C154,-252 12,-252 12,-252 6,-252 0,-246 0,-240 0,-240 0,-228 0,-228 0,-222 6,-216 12,-216 12,-216 154,-216 154,-216 160,-216 166,-222 166,-228 166,-228 166,-240 166,-240 166,-246 160,-252 154,-252"/>
+<text text-anchor="middle" x="83" y="-231.5" font-family="Arial" font-size="10.00">Validar extensión / video / 200 MB</text>
+</g>
+<!-- V&#45;&gt;F -->
+<g id="edge5" class="edge">
+<title>V&#45;&gt;F</title>
+<path fill="none" stroke="#7b6b43" d="M83,-287.7C83,-279.98 83,-270.71 83,-262.11"/>
+<polygon fill="#7b6b43" stroke="#7b6b43" points="86.5,-262.1 83,-252.1 79.5,-262.1 86.5,-262.1"/>
+</g>
+<!-- S -->
+<g id="node7" class="node">
+<title>S</title>
+<path fill="#fff9ea" stroke="#b38d2e" d="M114,-180C114,-180 52,-180 52,-180 46,-180 40,-174 40,-168 40,-168 40,-156 40,-156 40,-150 46,-144 52,-144 52,-144 114,-144 114,-144 120,-144 126,-150 126,-156 126,-156 126,-168 126,-168 126,-174 120,-180 114,-180"/>
+<text text-anchor="middle" x="83" y="-159.5" font-family="Arial" font-size="10.00">Guardar archivo</text>
+</g>
+<!-- F&#45;&gt;S -->
+<g id="edge6" class="edge">
+<title>F&#45;&gt;S</title>
+<path fill="none" stroke="#7b6b43" d="M83,-215.7C83,-207.98 83,-198.71 83,-190.11"/>
+<polygon fill="#7b6b43" stroke="#7b6b43" points="86.5,-190.1 83,-180.1 79.5,-190.1 86.5,-190.1"/>
+</g>
+<!-- DB -->
+<g id="node8" class="node">
+<title>DB</title>
+<path fill="#fff9ea" stroke="#b38d2e" d="M134,-108C134,-108 32,-108 32,-108 26,-108 20,-102 20,-96 20,-96 20,-84 20,-84 20,-78 26,-72 32,-72 32,-72 134,-72 134,-72 140,-72 146,-78 146,-84 146,-84 146,-96 146,-96 146,-102 140,-108 134,-108"/>
+<text text-anchor="middle" x="83" y="-87.5" font-family="Arial" font-size="10.00">INSERT tareas_entregas</text>
+</g>
+<!-- S&#45;&gt;DB -->
+<g id="edge7" class="edge">
+<title>S&#45;&gt;DB</title>
+<path fill="none" stroke="#7b6b43" d="M83,-143.7C83,-135.98 83,-126.71 83,-118.11"/>
+<polygon fill="#7b6b43" stroke="#7b6b43" points="86.5,-118.1 83,-108.1 79.5,-118.1 86.5,-118.1"/>
+</g>
+<!-- N -->
+<g id="node9" class="node">
+<title>N</title>
+<path fill="#fff9ea" stroke="#b38d2e" d="M141.5,-36C141.5,-36 24.5,-36 24.5,-36 18.5,-36 12.5,-30 12.5,-24 12.5,-24 12.5,-12 12.5,-12 12.5,-6 18.5,0 24.5,0 24.5,0 141.5,0 141.5,0 147.5,0 153.5,-6 153.5,-12 153.5,-12 153.5,-24 153.5,-24 153.5,-30 147.5,-36 141.5,-36"/>
+<text text-anchor="middle" x="83" y="-15.5" font-family="Arial" font-size="10.00">Crear notificación al docente</text>
+</g>
+<!-- DB&#45;&gt;N -->
+<g id="edge8" class="edge">
+<title>DB&#45;&gt;N</title>
+<path fill="none" stroke="#7b6b43" d="M83,-71.7C83,-63.98 83,-54.71 83,-46.11"/>
+<polygon fill="#7b6b43" stroke="#7b6b43" points="86.5,-46.1 83,-36.1 79.5,-46.1 86.5,-46.1"/>
+</g>
+</g>
+</svg>
+</div><h4>1.5.3. Diagrama entidad relación</h4><div class="diagram"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.42.4 (0)
+ -->
+<!-- Title: G Pages: 1 -->
+<svg width="726pt" height="1055pt"
+ viewBox="0.00 0.00 726.00 1055.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 1051)">
+<title>G</title>
+<!-- admin -->
+<g id="node1" class="node">
+<title>admin</title>
+<polygon fill="#eaf2f8" stroke="transparent" points="0,0 0,-78 112,-78 112,0 0,0"/>
+<text text-anchor="start" x="3" y="-64.8" font-family="Arial" font-weight="bold" font-size="14.00">administradores</text>
+<text text-anchor="start" x="3" y="-44.8" font-family="Arial" font-size="14.00">PK id</text>
+<text text-anchor="start" x="3" y="-25.8" font-family="Arial" font-size="14.00">correo UNIQUE</text>
+<text text-anchor="start" x="3" y="-6.8" font-family="Arial" font-size="14.00">password_hash</text>
+<polygon fill="none" stroke="black" points="0,0 0,-78 112,-78 112,0 0,0"/>
+</g>
+<!-- event -->
+<g id="node17" class="node">
+<title>event</title>
+<polygon fill="#eaf2f8" stroke="transparent" points="203,-9.5 203,-68.5 336,-68.5 336,-9.5 203,-9.5"/>
+<text text-anchor="start" x="206.5" y="-54.8" font-family="Arial" font-weight="bold" font-size="14.00">eventos_calendario</text>
+<text text-anchor="start" x="206.5" y="-34.8" font-family="Arial" font-size="14.00">PK id</text>
+<text text-anchor="start" x="206.5" y="-15.8" font-family="Arial" font-size="14.00">titulo, fecha</text>
+<polygon fill="none" stroke="black" points="203,-9.5 203,-68.5 336,-68.5 336,-9.5 203,-9.5"/>
+</g>
+<!-- admin&#45;&gt;event -->
+<g id="edge1" class="edge">
+<title>admin&#45;&gt;event</title>
+<path fill="none" stroke="#60759b" stroke-width="1.1" stroke-dasharray="5,2" d="M112.09,-39C112.09,-39 196.28,-39 196.28,-39"/>
+<polygon fill="#60759b" stroke="#60759b" stroke-width="1.1" points="196.28,-41.28 202.78,-39 196.28,-36.73 196.28,-41.28"/>
+<text text-anchor="middle" x="157.5" y="-42.8" font-family="Times,serif" font-size="14.00">creador</text>
+</g>
+<!-- prof -->
+<g id="node2" class="node">
+<title>prof</title>
+<polygon fill="#eaf2f8" stroke="transparent" points="5,-353 5,-431 107,-431 107,-353 5,-353"/>
+<text text-anchor="start" x="21" y="-417.8" font-family="Arial" font-weight="bold" font-size="14.00">profesores</text>
+<text text-anchor="start" x="8" y="-397.8" font-family="Arial" font-size="14.00">PK id</text>
+<text text-anchor="start" x="8" y="-378.8" font-family="Arial" font-size="14.00">correo UNIQUE</text>
+<text text-anchor="start" x="8" y="-359.8" font-family="Arial" font-size="14.00">especialidad</text>
+<polygon fill="none" stroke="black" points="5,-353 5,-431 107,-431 107,-353 5,-353"/>
+</g>
+<!-- curso -->
+<g id="node6" class="node">
+<title>curso</title>
+<polygon fill="#e8f8f5" stroke="transparent" points="219,-635 219,-713 320,-713 320,-635 219,-635"/>
+<text text-anchor="start" x="247.5" y="-699.8" font-family="Arial" font-weight="bold" font-size="14.00">cursos</text>
+<text text-anchor="start" x="222.5" y="-679.8" font-family="Arial" font-size="14.00">PK id</text>
+<text text-anchor="start" x="222.5" y="-660.8" font-family="Arial" font-size="14.00">instructor_id FK</text>
+<text text-anchor="start" x="222.5" y="-641.8" font-family="Arial" font-size="14.00">grado_id FK</text>
+<polygon fill="none" stroke="black" points="219,-635 219,-713 320,-713 320,-635 219,-635"/>
+</g>
+<!-- prof&#45;&gt;curso -->
+<g id="edge2" class="edge">
+<title>prof&#45;&gt;curso</title>
+<path fill="none" stroke="#60759b" stroke-width="1.1" d="M107,-398.5C132.5,-398.5 158,-398.5 158,-398.5 158,-398.5 158,-674 158,-674 158,-674 212.47,-674 212.47,-674"/>
+<polygon fill="#60759b" stroke="#60759b" stroke-width="1.1" points="212.47,-676.28 218.97,-674 212.47,-671.73 212.47,-676.28"/>
+<text text-anchor="middle" x="157.5" y="-441.8" font-family="Times,serif" font-size="14.00">1:N</text>
+</g>
+<!-- notif -->
+<g id="node16" class="node">
+<title>notif</title>
+<polygon fill="#eaf2f8" stroke="transparent" points="419.5,-131 419.5,-209 524.5,-209 524.5,-131 419.5,-131"/>
+<text text-anchor="start" x="427" y="-195.8" font-family="Arial" font-weight="bold" font-size="14.00">notificaciones</text>
+<text text-anchor="start" x="423" y="-175.8" font-family="Arial" font-size="14.00">PK id</text>
+<text text-anchor="start" x="423" y="-156.8" font-family="Arial" font-size="14.00">destinatario FK?</text>
+<text text-anchor="start" x="423" y="-137.8" font-family="Arial" font-size="14.00">leida</text>
+<polygon fill="none" stroke="black" points="419.5,-131 419.5,-209 524.5,-209 524.5,-131 419.5,-131"/>
+</g>
+<!-- prof&#45;&gt;notif -->
+<g id="edge21" class="edge">
+<title>prof&#45;&gt;notif</title>
+<path fill="none" stroke="#60759b" stroke-width="1.1" d="M39,-352.7C39,-292.84 39,-185.67 39,-185.67 39,-185.67 412.84,-185.67 412.84,-185.67"/>
+<polygon fill="#60759b" stroke="#60759b" stroke-width="1.1" points="412.84,-187.94 419.34,-185.67 412.84,-183.39 412.84,-187.94"/>
+<text text-anchor="middle" x="269.5" y="-194.8" font-family="Times,serif" font-size="14.00">1:N</text>
+</g>
+<!-- acud -->
+<g id="node3" class="node">
+<title>acud</title>
+<polygon fill="#eaf2f8" stroke="transparent" points="5,-96 5,-174 107,-174 107,-96 5,-96"/>
+<text text-anchor="start" x="20.5" y="-160.8" font-family="Arial" font-weight="bold" font-size="14.00">acudientes</text>
+<text text-anchor="start" x="8" y="-140.8" font-family="Arial" font-size="14.00">PK id</text>
+<text text-anchor="start" x="8" y="-121.8" font-family="Arial" font-size="14.00">correo UNIQUE</text>
+<text text-anchor="start" x="8" y="-102.8" font-family="Arial" font-size="14.00">telefono</text>
+<polygon fill="none" stroke="black" points="5,-96 5,-174 107,-174 107,-96 5,-96"/>
+</g>
+<!-- est -->
+<g id="node4" class="node">
+<title>est</title>
+<polygon fill="#e8f8f5" stroke="transparent" points="217.5,-366 217.5,-444 321.5,-444 321.5,-366 217.5,-366"/>
+<text text-anchor="start" x="231.5" y="-430.8" font-family="Arial" font-weight="bold" font-size="14.00">estudiantes</text>
+<text text-anchor="start" x="220.5" y="-410.8" font-family="Arial" font-size="14.00">PK id</text>
+<text text-anchor="start" x="220.5" y="-391.8" font-family="Arial" font-size="14.00">grado_id FK</text>
+<text text-anchor="start" x="220.5" y="-372.8" font-family="Arial" font-size="14.00">acudiente_id FK</text>
+<polygon fill="none" stroke="black" points="217.5,-366 217.5,-444 321.5,-444 321.5,-366 217.5,-366"/>
+</g>
+<!-- acud&#45;&gt;est -->
+<g id="edge5" class="edge">
+<title>acud&#45;&gt;est</title>
+<path fill="none" stroke="#60759b" stroke-width="1.1" d="M107.37,-159.67C163.04,-159.67 244,-159.67 244,-159.67 244,-159.67 244,-359.35 244,-359.35"/>
+<polygon fill="#60759b" stroke="#60759b" stroke-width="1.1" points="241.73,-359.35 244,-365.85 246.28,-359.35 241.73,-359.35"/>
+<text text-anchor="middle" x="157.5" y="-168.8" font-family="Times,serif" font-size="14.00">1:N</text>
+</g>
+<!-- ent -->
+<g id="node13" class="node">
+<title>ent</title>
+<polygon fill="#fff6dd" stroke="transparent" points="608,-192.5 608,-289.5 718,-289.5 718,-192.5 608,-192.5"/>
+<text text-anchor="start" x="611" y="-275.8" font-family="Arial" font-weight="bold" font-size="14.00">tareas_entregas</text>
+<text text-anchor="start" x="611" y="-255.8" font-family="Arial" font-size="14.00">PK id</text>
+<text text-anchor="start" x="611" y="-236.8" font-family="Arial" font-size="14.00">tarea_id FK</text>
+<text text-anchor="start" x="611" y="-217.8" font-family="Arial" font-size="14.00">student_id FK</text>
+<text text-anchor="start" x="611" y="-198.8" font-family="Arial" font-size="14.00">nota</text>
+<polygon fill="none" stroke="black" points="608,-192.5 608,-289.5 718,-289.5 718,-192.5 608,-192.5"/>
+</g>
+<!-- acud&#45;&gt;ent -->
+<g id="edge17" class="edge">
+<title>acud&#45;&gt;ent</title>
+<path fill="none" stroke="#60759b" stroke-width="1.1" stroke-dasharray="5,2" d="M73,-174.19C73,-200.36 73,-230 73,-230 73,-230 601.26,-230 601.26,-230"/>
+<polygon fill="#60759b" stroke="#60759b" stroke-width="1.1" points="601.26,-232.28 607.76,-230 601.26,-227.73 601.26,-232.28"/>
+<text text-anchor="middle" x="367" y="-97.8" font-family="Times,serif" font-size="14.00">0:N</text>
+</g>
+<!-- acud&#45;&gt;notif -->
+<g id="edge20" class="edge">
+<title>acud&#45;&gt;notif</title>
+<path fill="none" stroke="#60759b" stroke-width="1.1" d="M107.01,-145.33C107.01,-145.33 412.76,-145.33 412.76,-145.33"/>
+<polygon fill="#60759b" stroke="#60759b" stroke-width="1.1" points="412.76,-147.61 419.26,-145.33 412.76,-143.06 412.76,-147.61"/>
+<text text-anchor="middle" x="269.5" y="-138.8" font-family="Times,serif" font-size="14.00">1:N</text>
+</g>
+<!-- matr -->
+<g id="node7" class="node">
+<title>matr</title>
+<polygon fill="#e8f8f5" stroke="transparent" points="427,-687 427,-765 517,-765 517,-687 427,-687"/>
+<text text-anchor="start" x="437.5" y="-751.8" font-family="Arial" font-weight="bold" font-size="14.00">matriculas</text>
+<text text-anchor="start" x="430" y="-731.8" font-family="Arial" font-size="14.00">PK id</text>
+<text text-anchor="start" x="430" y="-712.8" font-family="Arial" font-size="14.00">student_id FK</text>
+<text text-anchor="start" x="430" y="-693.8" font-family="Arial" font-size="14.00">course_id FK</text>
+<polygon fill="none" stroke="black" points="427,-687 427,-765 517,-765 517,-687 427,-687"/>
+</g>
+<!-- est&#45;&gt;matr -->
+<g id="edge6" class="edge">
+<title>est&#45;&gt;matr</title>
+<path fill="none" stroke="#60759b" stroke-width="1.1" d="M321.82,-424.5C361.76,-424.5 410,-424.5 410,-424.5 410,-424.5 410,-693.5 410,-693.5 410,-693.5 420.44,-693.5 420.44,-693.5"/>
+<polygon fill="#60759b" stroke="#60759b" stroke-width="1.1" points="420.44,-695.78 426.94,-693.5 420.44,-691.23 420.44,-695.78"/>
+<text text-anchor="middle" x="367" y="-604.8" font-family="Times,serif" font-size="14.00">1:N</text>
+</g>
+<!-- cal -->
+<g id="node8" class="node">
+<title>cal</title>
+<polygon fill="#e8f8f5" stroke="transparent" points="424.5,-573.5 424.5,-670.5 519.5,-670.5 519.5,-573.5 424.5,-573.5"/>
+<text text-anchor="start" x="428" y="-656.8" font-family="Arial" font-weight="bold" font-size="14.00">calificaciones</text>
+<text text-anchor="start" x="428" y="-636.8" font-family="Arial" font-size="14.00">PK id</text>
+<text text-anchor="start" x="428" y="-617.8" font-family="Arial" font-size="14.00">student_id FK</text>
+<text text-anchor="start" x="428" y="-598.8" font-family="Arial" font-size="14.00">course_id FK</text>
+<text text-anchor="start" x="428" y="-579.8" font-family="Arial" font-size="14.00">periodo, score</text>
+<polygon fill="none" stroke="black" points="424.5,-573.5 424.5,-670.5 519.5,-670.5 519.5,-573.5 424.5,-573.5"/>
+</g>
+<!-- est&#45;&gt;cal -->
+<g id="edge8" class="edge">
+<title>est&#45;&gt;cal</title>
+<path fill="none" stroke="#60759b" stroke-width="1.1" d="M260,-444.37C260,-502.43 260,-604.25 260,-604.25 260,-604.25 417.92,-604.25 417.92,-604.25"/>
+<polygon fill="#60759b" stroke="#60759b" stroke-width="1.1" points="417.92,-606.53 424.42,-604.25 417.92,-601.98 417.92,-606.53"/>
+<text text-anchor="middle" x="367" y="-518.8" font-family="Times,serif" font-size="14.00">1:N</text>
+</g>
+<!-- asi -->
+<g id="node9" class="node">
+<title>asi</title>
+<polygon fill="#fcecef" stroke="transparent" points="427,-460.5 427,-557.5 517,-557.5 517,-460.5 427,-460.5"/>
+<text text-anchor="start" x="435.5" y="-543.8" font-family="Arial" font-weight="bold" font-size="14.00">asistencias</text>
+<text text-anchor="start" x="430" y="-523.8" font-family="Arial" font-size="14.00">PK id</text>
+<text text-anchor="start" x="430" y="-504.8" font-family="Arial" font-size="14.00">student_id FK</text>
+<text text-anchor="start" x="430" y="-485.8" font-family="Arial" font-size="14.00">course_id FK</text>
+<text text-anchor="start" x="430" y="-466.8" font-family="Arial" font-size="14.00">fecha, status</text>
+<polygon fill="none" stroke="black" points="427,-460.5 427,-557.5 517,-557.5 517,-460.5 427,-460.5"/>
+</g>
+<!-- est&#45;&gt;asi -->
+<g id="edge10" class="edge">
+<title>est&#45;&gt;asi</title>
+<path fill="none" stroke="#60759b" stroke-width="1.1" d="M300,-444.31C300,-464.74 300,-485.5 300,-485.5 300,-485.5 420.31,-485.5 420.31,-485.5"/>
+<polygon fill="#60759b" stroke="#60759b" stroke-width="1.1" points="420.31,-487.78 426.81,-485.5 420.31,-483.23 420.31,-487.78"/>
+<text text-anchor="middle" x="367" y="-464.8" font-family="Times,serif" font-size="14.00">1:N</text>
+</g>
+<!-- conv -->
+<g id="node10" class="node">
+<title>conv</title>
+<polygon fill="#fcecef" stroke="transparent" points="427,-366 427,-444 517,-444 517,-366 427,-366"/>
+<text text-anchor="start" x="433" y="-430.8" font-family="Arial" font-weight="bold" font-size="14.00">convivencia</text>
+<text text-anchor="start" x="430" y="-410.8" font-family="Arial" font-size="14.00">PK id</text>
+<text text-anchor="start" x="430" y="-391.8" font-family="Arial" font-size="14.00">student_id FK</text>
+<text text-anchor="start" x="430" y="-372.8" font-family="Arial" font-size="14.00">seguimiento</text>
+<polygon fill="none" stroke="black" points="427,-366 427,-444 517,-444 517,-366 427,-366"/>
+</g>
+<!-- est&#45;&gt;conv -->
+<g id="edge12" class="edge">
+<title>est&#45;&gt;conv</title>
+<path fill="none" stroke="#60759b" stroke-width="1.1" d="M321.65,-405C321.65,-405 420.41,-405 420.41,-405"/>
+<polygon fill="#60759b" stroke="#60759b" stroke-width="1.1" points="420.41,-407.28 426.91,-405 420.41,-402.73 420.41,-407.28"/>
+<text text-anchor="middle" x="367" y="-408.8" font-family="Times,serif" font-size="14.00">1:N</text>
+</g>
+<!-- alert -->
+<g id="node11" class="node">
+<title>alert</title>
+<polygon fill="#fcecef" stroke="transparent" points="415,-272 415,-350 529,-350 529,-272 415,-272"/>
+<text text-anchor="start" x="418" y="-336.8" font-family="Arial" font-weight="bold" font-size="14.00">alertas_alumnos</text>
+<text text-anchor="start" x="418" y="-316.8" font-family="Arial" font-size="14.00">PK id</text>
+<text text-anchor="start" x="418" y="-297.8" font-family="Arial" font-size="14.00">student_id FK</text>
+<text text-anchor="start" x="418" y="-278.8" font-family="Arial" font-size="14.00">atendida</text>
+<polygon fill="none" stroke="black" points="415,-272 415,-350 529,-350 529,-272 415,-272"/>
+</g>
+<!-- est&#45;&gt;alert -->
+<g id="edge13" class="edge">
+<title>est&#45;&gt;alert</title>
+<path fill="none" stroke="#60759b" stroke-width="1.1" d="M321.72,-385.5C365.18,-385.5 420,-385.5 420,-385.5 420,-385.5 420,-356.93 420,-356.93"/>
+<polygon fill="#60759b" stroke="#60759b" stroke-width="1.1" points="422.28,-356.93 420,-350.43 417.73,-356.93 422.28,-356.93"/>
+<text text-anchor="middle" x="367" y="-314.8" font-family="Times,serif" font-size="14.00">1:N</text>
+</g>
+<!-- est&#45;&gt;ent -->
+<g id="edge16" class="edge">
+<title>est&#45;&gt;ent</title>
+<path fill="none" stroke="#60759b" stroke-width="1.1" d="M296,-365.74C296,-320.11 296,-251 296,-251 296,-251 601.16,-251 601.16,-251"/>
+<polygon fill="#60759b" stroke="#60759b" stroke-width="1.1" points="601.16,-253.28 607.66,-251 601.16,-248.73 601.16,-253.28"/>
+<text text-anchor="middle" x="472" y="-244.8" font-family="Times,serif" font-size="14.00">1:N</text>
+</g>
+<!-- est&#45;&gt;notif -->
+<g id="edge22" class="edge">
+<title>est&#45;&gt;notif</title>
+<path fill="none" stroke="#60759b" stroke-width="1.1" d="M270,-365.94C270,-305.78 270,-197.33 270,-197.33 270,-197.33 412.95,-197.33 412.95,-197.33"/>
+<polygon fill="#60759b" stroke="#60759b" stroke-width="1.1" points="412.95,-199.61 419.45,-197.33 412.95,-195.06 412.95,-199.61"/>
+<text text-anchor="middle" x="367" y="-221.8" font-family="Times,serif" font-size="14.00">0:N</text>
+</g>
+<!-- gr -->
+<g id="node5" class="node">
+<title>gr</title>
+<polygon fill="#e8f8f5" stroke="transparent" points="1,-510.5 1,-569.5 111,-569.5 111,-510.5 1,-510.5"/>
+<text text-anchor="start" x="33" y="-555.8" font-family="Arial" font-weight="bold" font-size="14.00">grados</text>
+<text text-anchor="start" x="4" y="-535.8" font-family="Arial" font-size="14.00">PK id</text>
+<text text-anchor="start" x="4" y="-516.8" font-family="Arial" font-size="14.00">nombre UNIQUE</text>
+<polygon fill="none" stroke="black" points="1,-510.5 1,-569.5 111,-569.5 111,-510.5 1,-510.5"/>
+</g>
+<!-- gr&#45;&gt;est -->
+<g id="edge4" class="edge">
+<title>gr&#45;&gt;est</title>
+<path fill="none" stroke="#60759b" stroke-width="1.1" d="M56,-510.35C56,-480.08 56,-437.5 56,-437.5 56,-437.5 210.77,-437.5 210.77,-437.5"/>
+<polygon fill="#60759b" stroke="#60759b" stroke-width="1.1" points="210.77,-439.78 217.27,-437.5 210.77,-435.23 210.77,-439.78"/>
+<text text-anchor="middle" x="157.5" y="-515.8" font-family="Times,serif" font-size="14.00">1:N</text>
+</g>
+<!-- gr&#45;&gt;curso -->
+<g id="edge3" class="edge">
+<title>gr&#45;&gt;curso</title>
+<path fill="none" stroke="#60759b" stroke-width="1.1" d="M111.21,-563.5C165.4,-563.5 240,-563.5 240,-563.5 240,-563.5 240,-628.23 240,-628.23"/>
+<polygon fill="#60759b" stroke="#60759b" stroke-width="1.1" points="237.73,-628.23 240,-634.73 242.28,-628.23 237.73,-628.23"/>
+<text text-anchor="middle" x="157.5" y="-570.8" font-family="Times,serif" font-size="14.00">1:N</text>
+</g>
+<!-- curso&#45;&gt;matr -->
+<g id="edge7" class="edge">
+<title>curso&#45;&gt;matr</title>
+<path fill="none" stroke="#60759b" stroke-width="1.1" d="M320.08,-700C320.08,-700 420.39,-700 420.39,-700"/>
+<polygon fill="#60759b" stroke="#60759b" stroke-width="1.1" points="420.39,-702.28 426.89,-700 420.39,-697.73 420.39,-702.28"/>
+<text text-anchor="middle" x="367" y="-695.8" font-family="Times,serif" font-size="14.00">1:N</text>
+</g>
+<!-- curso&#45;&gt;cal -->
+<g id="edge9" class="edge">
+<title>curso&#45;&gt;cal</title>
+<path fill="none" stroke="#60759b" stroke-width="1.1" d="M320.08,-652.75C320.08,-652.75 418,-652.75 418,-652.75"/>
+<polygon fill="#60759b" stroke="#60759b" stroke-width="1.1" points="418,-655.03 424.5,-652.75 418,-650.48 418,-655.03"/>
+<text text-anchor="middle" x="367" y="-642.8" font-family="Times,serif" font-size="14.00">1:N</text>
+</g>
+<!-- curso&#45;&gt;asi -->
+<g id="edge11" class="edge">
+<title>curso&#45;&gt;asi</title>
+<path fill="none" stroke="#60759b" stroke-width="1.1" d="M280,-634.63C280,-593.22 280,-534 280,-534 280,-534 420.48,-534 420.48,-534"/>
+<polygon fill="#60759b" stroke="#60759b" stroke-width="1.1" points="420.48,-536.28 426.98,-534 420.48,-531.73 420.48,-536.28"/>
+<text text-anchor="middle" x="367" y="-563.8" font-family="Times,serif" font-size="14.00">1:N</text>
+</g>
+<!-- tarea -->
+<g id="node12" class="node">
+<title>tarea</title>
+<polygon fill="#fff6dd" stroke="transparent" points="425.5,-969 425.5,-1047 518.5,-1047 518.5,-969 425.5,-969"/>
+<text text-anchor="start" x="452.5" y="-1033.8" font-family="Arial" font-weight="bold" font-size="14.00">tareas</text>
+<text text-anchor="start" x="429" y="-1013.8" font-family="Arial" font-size="14.00">PK id</text>
+<text text-anchor="start" x="429" y="-994.8" font-family="Arial" font-size="14.00">curso_id FK</text>
+<text text-anchor="start" x="429" y="-975.8" font-family="Arial" font-size="14.00">fecha_entrega</text>
+<polygon fill="none" stroke="black" points="425.5,-969 425.5,-1047 518.5,-1047 518.5,-969 425.5,-969"/>
+</g>
+<!-- curso&#45;&gt;tarea -->
+<g id="edge14" class="edge">
+<title>curso&#45;&gt;tarea</title>
+<path fill="none" stroke="#60759b" stroke-width="1.1" d="M253,-713.3C253,-801.59 253,-1008 253,-1008 253,-1008 418.79,-1008 418.79,-1008"/>
+<polygon fill="#60759b" stroke="#60759b" stroke-width="1.1" points="418.79,-1010.28 425.29,-1008 418.79,-1005.73 418.79,-1010.28"/>
+<text text-anchor="middle" x="367" y="-982.8" font-family="Times,serif" font-size="14.00">1:N</text>
+</g>
+<!-- mat -->
+<g id="node14" class="node">
+<title>mat</title>
+<polygon fill="#fff6dd" stroke="transparent" points="398,-875 398,-953 546,-953 546,-875 398,-875"/>
+<text text-anchor="start" x="401" y="-939.8" font-family="Arial" font-weight="bold" font-size="14.00">materiales_didacticos</text>
+<text text-anchor="start" x="401" y="-919.8" font-family="Arial" font-size="14.00">PK id</text>
+<text text-anchor="start" x="401" y="-900.8" font-family="Arial" font-size="14.00">curso_id FK</text>
+<text text-anchor="start" x="401" y="-881.8" font-family="Arial" font-size="14.00">archivo/enlace</text>
+<polygon fill="none" stroke="black" points="398,-875 398,-953 546,-953 546,-875 398,-875"/>
+</g>
+<!-- curso&#45;&gt;mat -->
+<g id="edge18" class="edge">
+<title>curso&#45;&gt;mat</title>
+<path fill="none" stroke="#60759b" stroke-width="1.1" d="M320.35,-706.5C358.44,-706.5 404,-706.5 404,-706.5 404,-706.5 404,-868.47 404,-868.47"/>
+<polygon fill="#60759b" stroke="#60759b" stroke-width="1.1" points="401.73,-868.47 404,-874.97 406.28,-868.47 401.73,-868.47"/>
+<text text-anchor="middle" x="367" y="-917.8" font-family="Times,serif" font-size="14.00">1:N</text>
+</g>
+<!-- hor -->
+<g id="node15" class="node">
+<title>hor</title>
+<polygon fill="#eaf2f8" stroke="transparent" points="432.5,-781 432.5,-859 511.5,-859 511.5,-781 432.5,-781"/>
+<text text-anchor="start" x="445" y="-845.8" font-family="Arial" font-weight="bold" font-size="14.00">horarios</text>
+<text text-anchor="start" x="436" y="-825.8" font-family="Arial" font-size="14.00">PK id</text>
+<text text-anchor="start" x="436" y="-806.8" font-family="Arial" font-size="14.00">curso_id FK</text>
+<text text-anchor="start" x="436" y="-787.8" font-family="Arial" font-size="14.00">dia/hora</text>
+<polygon fill="none" stroke="black" points="432.5,-781 432.5,-859 511.5,-859 511.5,-781 432.5,-781"/>
+</g>
+<!-- curso&#45;&gt;hor -->
+<g id="edge19" class="edge">
+<title>curso&#45;&gt;hor</title>
+<path fill="none" stroke="#60759b" stroke-width="1.1" d="M287,-713.13C287,-756.37 287,-820 287,-820 287,-820 425.81,-820 425.81,-820"/>
+<polygon fill="#60759b" stroke="#60759b" stroke-width="1.1" points="425.81,-822.28 432.31,-820 425.81,-817.73 425.81,-822.28"/>
+<text text-anchor="middle" x="367" y="-823.8" font-family="Times,serif" font-size="14.00">1:N</text>
+</g>
+<!-- tarea&#45;&gt;ent -->
+<g id="edge15" class="edge">
+<title>tarea&#45;&gt;ent</title>
+<path fill="none" stroke="#60759b" stroke-width="1.1" d="M518.72,-1008C575.27,-1008 663,-1008 663,-1008 663,-1008 663,-296.06 663,-296.06"/>
+<polygon fill="#60759b" stroke="#60759b" stroke-width="1.1" points="665.28,-296.06 663,-289.56 660.73,-296.06 665.28,-296.06"/>
+<text text-anchor="middle" x="577" y="-642.8" font-family="Times,serif" font-size="14.00">1:N</text>
+</g>
+</g>
+</svg>
+</div><h4>1.5.4. Diagrama de componentes</h4><div class="diagram"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.42.4 (0)
+ -->
+<!-- Title: G Pages: 1 -->
+<svg width="1125pt" height="286pt"
+ viewBox="0.00 0.00 1125.00 286.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 282)">
+<title>G</title>
+<!-- flutter -->
+<g id="node1" class="node">
+<title>flutter</title>
+<path fill="#5e759d" stroke="#5e759d" d="M133,-148.5C133,-148.5 12,-148.5 12,-148.5 6,-148.5 0,-142.5 0,-136.5 0,-136.5 0,-107.5 0,-107.5 0,-101.5 6,-95.5 12,-95.5 12,-95.5 133,-95.5 133,-95.5 139,-95.5 145,-101.5 145,-107.5 145,-107.5 145,-136.5 145,-136.5 145,-142.5 139,-148.5 133,-148.5"/>
+<text text-anchor="middle" x="72.5" y="-133.3" font-family="Arial" font-size="14.00">Flutter Web / PWA</text>
+<text text-anchor="middle" x="72.5" y="-118.3" font-family="Arial" font-size="14.00">Dart + Material + http</text>
+<text text-anchor="middle" x="72.5" y="-103.3" font-family="Arial" font-size="14.00">shared_preferences</text>
+</g>
+<!-- services -->
+<g id="node2" class="node">
+<title>services</title>
+<path fill="#5e759d" stroke="#5e759d" d="M412,-197.5C412,-197.5 239,-197.5 239,-197.5 233,-197.5 227,-191.5 227,-185.5 227,-185.5 227,-156.5 227,-156.5 227,-150.5 233,-144.5 239,-144.5 239,-144.5 412,-144.5 412,-144.5 418,-144.5 424,-150.5 424,-156.5 424,-156.5 424,-185.5 424,-185.5 424,-191.5 418,-197.5 412,-197.5"/>
+<text text-anchor="middle" x="325.5" y="-182.3" font-family="Arial" font-size="14.00">Frontend services</text>
+<text text-anchor="middle" x="325.5" y="-167.3" font-family="Arial" font-size="14.00">Auth, Actividades, Evaluación,</text>
+<text text-anchor="middle" x="325.5" y="-152.3" font-family="Arial" font-size="14.00">Asistencia, Materiales, etc.</text>
+</g>
+<!-- flutter&#45;&gt;services -->
+<g id="edge1" class="edge">
+<title>flutter&#45;&gt;services</title>
+<path fill="none" stroke="#647a9b" d="M145.23,-135.25C191.97,-135.25 244,-135.25 244,-135.25 244,-135.25 244,-137.27 244,-137.27"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="241.55,-137.27 244,-144.27 246.45,-137.27 241.55,-137.27"/>
+</g>
+<!-- wa -->
+<g id="node9" class="node">
+<title>wa</title>
+<path fill="#5e759d" stroke="#5e759d" d="M379,-126C379,-126 272,-126 272,-126 266,-126 260,-120 260,-114 260,-114 260,-100 260,-100 260,-94 266,-88 272,-88 272,-88 379,-88 379,-88 385,-88 391,-94 391,-100 391,-100 391,-114 391,-114 391,-120 385,-126 379,-126"/>
+<text text-anchor="middle" x="325.5" y="-110.8" font-family="Arial" font-size="14.00">WhatsApp / wa.me</text>
+<text text-anchor="middle" x="325.5" y="-95.8" font-family="Arial" font-size="14.00">url_launcher</text>
+</g>
+<!-- flutter&#45;&gt;wa -->
+<g id="edge9" class="edge">
+<title>flutter&#45;&gt;wa</title>
+<path fill="none" stroke="#647a9b" d="M145.34,-110.75C145.34,-110.75 252.65,-110.75 252.65,-110.75"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="252.65,-113.2 259.65,-110.75 252.65,-108.3 252.65,-113.2"/>
+<text text-anchor="middle" x="186" y="-110.8" font-family="Times,serif" font-size="14.00">enlace</text>
+</g>
+<!-- api -->
+<g id="node3" class="node">
+<title>api</title>
+<path fill="#5e759d" stroke="#5e759d" d="M650,-197.5C650,-197.5 513,-197.5 513,-197.5 507,-197.5 501,-191.5 501,-185.5 501,-185.5 501,-156.5 501,-156.5 501,-150.5 507,-144.5 513,-144.5 513,-144.5 650,-144.5 650,-144.5 656,-144.5 662,-150.5 662,-156.5 662,-156.5 662,-185.5 662,-185.5 662,-191.5 656,-197.5 650,-197.5"/>
+<text text-anchor="middle" x="581.5" y="-182.3" font-family="Arial" font-size="14.00">FastAPI</text>
+<text text-anchor="middle" x="581.5" y="-167.3" font-family="Arial" font-size="14.00">main.py</text>
+<text text-anchor="middle" x="581.5" y="-152.3" font-family="Arial" font-size="14.00">REST JSON + multipart</text>
+</g>
+<!-- services&#45;&gt;api -->
+<g id="edge2" class="edge">
+<title>services&#45;&gt;api</title>
+<path fill="none" stroke="#647a9b" d="M424.11,-171C424.11,-171 493.77,-171 493.77,-171"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="493.77,-173.45 500.77,-171 493.77,-168.55 493.77,-173.45"/>
+<text text-anchor="middle" x="462.5" y="-174.8" font-family="Times,serif" font-size="14.00">HTTP</text>
+</g>
+<!-- schemas -->
+<g id="node4" class="node">
+<title>schemas</title>
+<path fill="#5e759d" stroke="#5e759d" d="M872,-278C872,-278 807,-278 807,-278 801,-278 795,-272 795,-266 795,-266 795,-252 795,-252 795,-246 801,-240 807,-240 807,-240 872,-240 872,-240 878,-240 884,-246 884,-252 884,-252 884,-266 884,-266 884,-272 878,-278 872,-278"/>
+<text text-anchor="middle" x="839.5" y="-262.8" font-family="Arial" font-size="14.00">Pydantic</text>
+<text text-anchor="middle" x="839.5" y="-247.8" font-family="Arial" font-size="14.00">schemas.py</text>
+</g>
+<!-- api&#45;&gt;schemas -->
+<g id="edge3" class="edge">
+<title>api&#45;&gt;schemas</title>
+<path fill="none" stroke="#647a9b" d="M582,-197.88C582,-223.76 582,-259 582,-259 582,-259 787.94,-259 787.94,-259"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="787.94,-261.45 794.94,-259 787.94,-256.55 787.94,-261.45"/>
+<text text-anchor="middle" x="719.5" y="-262.8" font-family="Times,serif" font-size="14.00">validación</text>
+</g>
+<!-- orm -->
+<g id="node5" class="node">
+<title>orm</title>
+<path fill="#5e759d" stroke="#5e759d" d="M887,-222C887,-222 792,-222 792,-222 786,-222 780,-216 780,-210 780,-210 780,-196 780,-196 780,-190 786,-184 792,-184 792,-184 887,-184 887,-184 893,-184 899,-190 899,-196 899,-196 899,-210 899,-210 899,-216 893,-222 887,-222"/>
+<text text-anchor="middle" x="839.5" y="-206.8" font-family="Arial" font-size="14.00">SQLAlchemy 2.0</text>
+<text text-anchor="middle" x="839.5" y="-191.8" font-family="Arial" font-size="14.00">models.py</text>
+</g>
+<!-- api&#45;&gt;orm -->
+<g id="edge4" class="edge">
+<title>api&#45;&gt;orm</title>
+<path fill="none" stroke="#647a9b" d="M662.07,-190.75C662.07,-190.75 772.99,-190.75 772.99,-190.75"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="772.99,-193.2 779.99,-190.75 772.99,-188.3 772.99,-193.2"/>
+<text text-anchor="middle" x="719.5" y="-193.8" font-family="Times,serif" font-size="14.00">ORM</text>
+</g>
+<!-- files -->
+<g id="node7" class="node">
+<title>files</title>
+<path fill="#5e759d" stroke="#5e759d" d="M890,-165.5C890,-165.5 789,-165.5 789,-165.5 783,-165.5 777,-159.5 777,-153.5 777,-153.5 777,-124.5 777,-124.5 777,-118.5 783,-112.5 789,-112.5 789,-112.5 890,-112.5 890,-112.5 896,-112.5 902,-118.5 902,-124.5 902,-124.5 902,-153.5 902,-153.5 902,-159.5 896,-165.5 890,-165.5"/>
+<text text-anchor="middle" x="839.5" y="-150.3" font-family="Arial" font-size="14.00">Render filesystem</text>
+<text text-anchor="middle" x="839.5" y="-135.3" font-family="Arial" font-size="14.00">uploads/entregas/</text>
+<text text-anchor="middle" x="839.5" y="-120.3" font-family="Arial" font-size="14.00">actual: efímero</text>
+</g>
+<!-- api&#45;&gt;files -->
+<g id="edge7" class="edge">
+<title>api&#45;&gt;files</title>
+<path fill="none" stroke="#647a9b" d="M662.07,-155C662.07,-155 769.7,-155 769.7,-155"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="769.7,-157.45 776.7,-155 769.7,-152.55 769.7,-157.45"/>
+<text text-anchor="middle" x="719.5" y="-142.8" font-family="Times,serif" font-size="14.00">archivos</text>
+</g>
+<!-- pdf -->
+<g id="node8" class="node">
+<title>pdf</title>
+<path fill="#5e759d" stroke="#5e759d" d="M879,-94C879,-94 800,-94 800,-94 794,-94 788,-88 788,-82 788,-82 788,-68 788,-68 788,-62 794,-56 800,-56 800,-56 879,-56 879,-56 885,-56 891,-62 891,-68 891,-68 891,-82 891,-82 891,-88 885,-94 879,-94"/>
+<text text-anchor="middle" x="839.5" y="-78.8" font-family="Arial" font-size="14.00">ReportLab</text>
+<text text-anchor="middle" x="839.5" y="-63.8" font-family="Arial" font-size="14.00">Boletines PDF</text>
+</g>
+<!-- api&#45;&gt;pdf -->
+<g id="edge8" class="edge">
+<title>api&#45;&gt;pdf</title>
+<path fill="none" stroke="#647a9b" d="M582,-144.47C582,-115.14 582,-72 582,-72 582,-72 780.7,-72 780.7,-72"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="780.7,-74.45 787.7,-72 780.7,-69.55 780.7,-74.45"/>
+<text text-anchor="middle" x="719.5" y="-78.8" font-family="Times,serif" font-size="14.00">generación</text>
+</g>
+<!-- db -->
+<g id="node6" class="node">
+<title>db</title>
+<path fill="#5e759d" stroke="#5e759d" d="M1105,-53C1105,-53 1038,-53 1038,-53 1032,-53 1026,-47 1026,-41 1026,-41 1026,-27 1026,-27 1026,-21 1032,-15 1038,-15 1038,-15 1105,-15 1105,-15 1111,-15 1117,-21 1117,-27 1117,-27 1117,-41 1117,-41 1117,-47 1111,-53 1105,-53"/>
+<text text-anchor="middle" x="1071.5" y="-37.8" font-family="Arial" font-size="14.00">PostgreSQL</text>
+<text text-anchor="middle" x="1071.5" y="-22.8" font-family="Arial" font-size="14.00">Neon</text>
+</g>
+<!-- orm&#45;&gt;db -->
+<g id="edge5" class="edge">
+<title>orm&#45;&gt;db</title>
+<path fill="none" stroke="#647a9b" d="M899.07,-203C967.96,-203 1072,-203 1072,-203 1072,-203 1072,-60.06 1072,-60.06"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="1074.45,-60.06 1072,-53.06 1069.55,-60.06 1074.45,-60.06"/>
+</g>
+<!-- alembic -->
+<g id="node10" class="node">
+<title>alembic</title>
+<path fill="#5e759d" stroke="#5e759d" d="M875.5,-38C875.5,-38 803.5,-38 803.5,-38 797.5,-38 791.5,-32 791.5,-26 791.5,-26 791.5,-12 791.5,-12 791.5,-6 797.5,0 803.5,0 803.5,0 875.5,0 875.5,0 881.5,0 887.5,-6 887.5,-12 887.5,-12 887.5,-26 887.5,-26 887.5,-32 881.5,-38 875.5,-38"/>
+<text text-anchor="middle" x="839.5" y="-22.8" font-family="Arial" font-size="14.00">Alembic</text>
+<text text-anchor="middle" x="839.5" y="-7.8" font-family="Arial" font-size="14.00">13 revisiones</text>
+</g>
+<!-- alembic&#45;&gt;db -->
+<g id="edge6" class="edge">
+<title>alembic&#45;&gt;db</title>
+<path fill="none" stroke="#647a9b" d="M887.57,-26.5C887.57,-26.5 1018.86,-26.5 1018.86,-26.5"/>
+<polygon fill="#647a9b" stroke="#647a9b" points="1018.86,-28.95 1025.86,-26.5 1018.86,-24.05 1018.86,-28.95"/>
+<text text-anchor="middle" x="964" y="-22.8" font-family="Times,serif" font-size="14.00">migraciones</text>
+</g>
+</g>
+</svg>
+</div><h3>1.6. PRODUCTO DEL SOFTWARE</h3><p>URL documentada del frontend de producción: <a href="https://edu-campus-app-frontend.vercel.app">https://edu-campus-app-frontend.vercel.app</a>. El backend documentado: <a href="https://educampus-backend-rwz6.onrender.com">https://educampus-backend-rwz6.onrender.com</a>.</p><p>La presentación vieja contiene mockups iniciales; se conservan como material histórico y no como captura de la versión final.</p></section><section id="p2"><h2>SEGUNDA PARTE — II. PRUEBAS DEL SOFTWARE</h2><h3>1. INTRODUCCIÓN</h3><p>La unidad define pruebas unitarias, integración, sistema y aceptación para los flujos críticos.</p><h3>2. PLANIFICACIÓN DE LAS PRUEBAS</h3><h4>2.1. OBJETIVOS</h4><p>Verificar autenticación, validar reglas de negocio, comprobar persistencia, asegurar que los límites sean respetados y detectar riesgos de seguridad, disponibilidad y portabilidad.</p><h4>2.2. ALCANCE</h4><table><thead><tr><th>Módulo</th><th>Objetivos</th></tr></thead><tbody><tr><td>Autenticación</td><td>Login, sesión, logout</td></tr><tr><td>Evaluación</td><td>Notas/logros/periodos</td></tr><tr><td>Asistencia</td><td>Fechas y estados</td></tr><tr><td>Actividades/entregas</td><td>Plazo, archivo, video, tamaño, duplicado</td></tr><tr><td>Boletines</td><td>Firmas y PDF</td></tr><tr><td>Convivencia/alertas</td><td>Seguimiento y atención</td></tr><tr><td>Responsive/PWA</td><td>Cuatro tamaños definidos</td></tr></tbody></table><h4>2.3. ESTRATEGIAS DE PRUEBAS</h4><table><thead><tr><th>Nivel</th><th>Técnicas</th><th>Estrategia</th><th>Herramientas</th></tr></thead><tbody><tr><td>Unitarias</td><td>Equivalencia, límites, camino básico</td><td>Validadores y métodos críticos</td><td>flutter_test / pruebas API</td></tr><tr><td>Integración</td><td>Incremental y hilos</td><td>Frontend-API-BD-archivos</td><td>Postman/cURL + pruebas Flutter</td></tr><tr><td>Sistemas</td><td>Seguridad/rendimiento/usabilidad/portabilidad/fiabilidad/mantenibilidad</td><td>E2E</td><td>OWASP ZAP, JMeter, navegador, SonarQube</td></tr><tr><td>Aceptación</td><td>Casos de negocio</td><td>Flujos por rol</td><td>Selenium/Katalon</td></tr></tbody></table><h4>2.4. AMBIENTE DE PRUEBAS</h4><p>Dart ^3.13.2; FastAPI 0.141.1; SQLAlchemy 2.0.54; Pydantic 2.13.5; PostgreSQL/Neon; Alembic 1.20.0. Hardware exacto: registrar en la ejecución real.</p><h3>3. PRUEBAS UNITARIAS</h3><h4>Análisis — equivalencia</h4><table><thead><tr><th>Condición</th><th>Clase válida</th><th>Clase no válida</th><th>Casos</th></tr></thead><tbody><tr><td>Correo</td><td>Email + gmail</td><td>formato/dominio no válido</td><td>CP-002/003</td></tr><tr><td>Password</td><td>6..100 + reglas</td><td>fuera de rango/reglas</td><td>CP-001/002</td></tr><tr><td>Nota</td><td>0..5</td><td>fuera de rango</td><td>CP-007..009</td></tr><tr><td>Periodo</td><td>I..IV</td><td>otro</td><td>CP-008..010</td></tr><tr><td>Fecha</td><td>&lt;=hoy</td><td>&gt;hoy</td><td>CP-011/012</td></tr><tr><td>Archivo</td><td>permitido &lt;=200MiB</td><td>extensión/tamaño inválido</td><td>CP-013..017</td></tr></tbody></table><h4>Valores límite</h4><table><thead><tr><th>Variable</th><th>Inferior</th><th>Exacto</th><th>Superior</th><th>Criterio</th></tr></thead><tbody><tr><td>Contraseña</td><td>5</td><td>6</td><td>7</td><td>5 falla; 6 pasa.</td></tr><tr><td>Contraseña</td><td>99</td><td>100</td><td>101</td><td>100 pasa; 101 falla.</td></tr><tr><td>Calificación</td><td>-0.01</td><td>0</td><td>0.01</td><td>0 pasa; negativo falla.</td></tr><tr><td>Calificación</td><td>4.99</td><td>5</td><td>5.01</td><td>5 pasa; 5.01 falla.</td></tr><tr><td>Archivo</td><td>199 MiB</td><td>200 MiB</td><td>200 MiB+1</td><td>200 pasa; +1 falla.</td></tr><tr><td>Fecha asistencia</td><td>ayer</td><td>hoy</td><td>mañana</td><td>hoy pasa; mañana falla.</td></tr><tr><td>Periodo</td><td>III</td><td>I o IV</td><td>V</td><td>I y IV pasan; V falla.</td></tr><tr><td>Responsive width</td><td>899</td><td>900</td><td>901</td><td>899 usa menú móvil; 900 no.</td></tr></tbody></table><h4>Camino básico</h4><p>Función real: <code>frontend/lib/services/servicio_auth.dart::AuthService.iniciarSesion()</code>. Predicados: excepción de red, status 200, status 401. Complejidad ciclomática = 4.</p><pre>Future&lt;SesionUsuario&gt; iniciarSesion({
+  required String correo,
+  required String password,
+}) async {
+  final uri = Uri.parse(&#x27;${ApiConfig.baseUrl}/auth/login/&#x27;);
+  http.Response respuesta;
+  try {
+    respuesta = await http.post(
+      uri,
+      headers: {&#x27;Content-Type&#x27;: &#x27;application/json&#x27;},
+      body: jsonEncode({
+        &#x27;correo&#x27;: correo.trim().toLowerCase(),
+        &#x27;password&#x27;: password,
+      }),
+    ).timeout(const Duration(seconds: 45));
+  } catch (_) {
+    throw const AuthException(&#x27;No fue posible conectar con el servidor.&#x27;);
+  }
+  if (respuesta.statusCode == 200) {
+    final datos = jsonDecode(utf8.decode(respuesta.bodyBytes));
+    final sesion = SesionUsuario(
+      accessToken: datos[&#x27;access_token&#x27;] as String,
+      rol: datos[&#x27;rol&#x27;] as String,
+      nombre: datos[&#x27;nombre&#x27;] as String,
+      usuarioId: datos[&#x27;usuario_id&#x27;] as int,
+      correo: datos[&#x27;correo&#x27;] as String,
+    );
+    _sesionActual = sesion;
+    notifyListeners();
+    return sesion;
+  }
+  if (respuesta.statusCode == 401) {
+    throw const AuthException(&#x27;Correo o contraseña incorrectos&#x27;);
+  }
+  throw const AuthException(&#x27;No fue posible iniciar sesión. Intenta de nuevo más tarde.&#x27;);
+}</pre><table><thead><tr><th>Camino</th><th>Secuencia</th><th>Datos</th><th>Resultado</th></tr></thead><tbody><tr><td>P1</td><td>Inicio-URI-POST-Excepción-Error-Conexión-Fin</td><td>Servidor inaccesible / timeout</td><td>Se prueba catch.</td></tr><tr><td>P2</td><td>Inicio-URI-POST-NoExcepción-200-CrearSesion-Notificar-Return-Fin</td><td>HTTP 200 + JSON válido</td><td>Se crea SesionUsuario.</td></tr><tr><td>P3</td><td>Inicio-URI-POST-NoExcepción-No200-401-ErrorCredenciales-Fin</td><td>HTTP 401</td><td>AuthException específica.</td></tr><tr><td>P4</td><td>Inicio-URI-POST-NoExcepción-No200-No401-ErrorGenérico-Fin</td><td>HTTP 500, 503 u otro</td><td>AuthException genérica.</td></tr></tbody></table><h4>Ejecución y evaluación</h4><p>Los casos que requieren un entorno de servidor/herramientas externas se marcan como Pendiente de ejecución.</p><h3>4. PRUEBAS DE INTEGRACIÓN</h3><table><thead><tr><th>ID</th><th>Integración</th><th>Estrategia</th><th>Caso</th><th>Resultado</th></tr></thead><tbody><tr><td>I01</td><td>AuthService ↔ login</td><td>Ascendente</td><td>login 200/401/timeout</td><td>sesión correcta/error controlado</td></tr><tr><td>I02</td><td>API ↔ PostgreSQL</td><td>Descendente</td><td>cuenta válida/inválida</td><td>consulta y bcrypt correctos</td></tr><tr><td>I03</td><td>Tarea ↔ entrega ↔ archivo ↔ notificación</td><td>Hilo</td><td>entrega válida/vencida</td><td>flujo completo</td></tr><tr><td>I04</td><td>Calificaciones ↔ boletín ↔ firmas</td><td>Hilo</td><td>boletín completo/incompleto</td><td>PDF solo si cumple reglas</td></tr></tbody></table><h3>5. PRUEBAS DE SISTEMAS</h3><h4>Prueba de seguridad</h4><p><b>Nombre:</b> Protección de autenticación<br><b>Descripción:</b> Comprobar que contraseñas incorrectas no generan sesión y que endpoints protegidos rechazan tokens inválidos.<br><b>Ambiente:</b> API levantada + PostgreSQL de pruebas; cuentas ficticias.<br><b>Herramientas:</b> Pruebas API + revisión estática; OWASP ZAP como herramienta propuesta por la plantilla.<br><b>Diseño:</b> Diseño listo; ejecución externa requerida.<br><b>Resultado:</b> No ejecutado en este entorno.</p><h4>Prueba de rendimiento</h4><p><b>Nombre:</b> Respuesta de operaciones críticas<br><b>Descripción:</b> Medir latencia de login, listado de tareas, carga de entrega y boletín bajo carga controlada.<br><b>Ambiente:</b> Ambiente staging; datos representativos.<br><b>Herramientas:</b> Apache JMeter según plantilla.<br><b>Diseño:</b> Diseño listo; ejecución externa requerida.<br><b>Resultado:</b> No ejecutado; no se inventan tiempos.</p><h4>Prueba de usabilidad</h4><p><b>Nombre:</b> Navegación por rol<br><b>Descripción:</b> Comprobar que los tres paneles abren opciones sin excepciones y que formularios muestran validaciones comprensibles.<br><b>Ambiente:</b> Chrome/Edge; resoluciones definidas en responsive_test.dart.<br><b>Herramientas:</b> Flutter widget tests + inspección manual.<br><b>Diseño:</b> Hay prueba automática de desbordes.<br><b>Resultado:</b> Pendiente de ejecución completa.</p><h4>Prueba de portabilidad</h4><p><b>Nombre:</b> PWA y tamaños<br><b>Descripción:</b> Verificar que la interfaz funciona en teléfono, tablet y escritorio; la suite actual cubre cuatro tamaños.<br><b>Ambiente:</b> 320x568, 390x844, 768x1024, 1366x768.<br><b>Herramientas:</b> flutter_test + navegador.<br><b>Diseño:</b> Hay prueba automática de cuatro tamaños.<br><b>Resultado:</b> Ejecución no realizada aquí.</p><h4>Prueba de fiabilidad</h4><p><b>Nombre:</b> Restauración de sesión y BD<br><b>Descripción:</b> Comprobar recuperación cuando el backend reinicia y cuando la BD pierde conectividad temporalmente.<br><b>Ambiente:</b> Backend staging + PostgreSQL.<br><b>Herramientas:</b> Pruebas de integración/API.<br><b>Diseño:</b> Diseño de casos.<br><b>Resultado:</b> Pendiente.</p><h4>Prueba de mantenibilidad</h4><p><b>Nombre:</b> Migraciones y estructura<br><b>Descripción:</b> Verificar que Alembic actualiza esquema y que los servicios del frontend pueden modificarse sin romper pantallas no relacionadas.<br><b>Ambiente:</b> Repositorio completo.<br><b>Herramientas:</b> Revisión estática + ejecución de migraciones.<br><b>Diseño:</b> 13 revisiones Alembic presentes.<br><b>Resultado:</b> Pendiente de pipeline automatizado.</p><h3>6. PRUEBAS DE ACEPTACIÓN</h3><table><thead><tr><th>ID</th><th>Requisito</th><th>Escenario</th><th>Datos</th><th>Pasos</th><th>Esperado</th><th>Obtenido</th></tr></thead><tbody><tr><td>CA001</td><td>RF01</td><td>Ingreso exitoso</td><td>correo/contraseña válidos</td><td>Abrir app → ingresar → validar</td><td>Acceso al panel</td><td>Pendiente</td></tr><tr><td>CA002</td><td>RF07</td><td>Docente registra nota válida</td><td>score=4.5, periodo=II</td><td>Abrir evaluación → guardar</td><td>Nota visible/persistida</td><td>Pendiente</td></tr><tr><td>CA003</td><td>RF12</td><td>Registrar convivencia</td><td>situación positiva</td><td>Abrir convivencia → registrar</td><td>Situación visible y seguimiento disponible</td><td>Pendiente</td></tr><tr><td>CA004</td><td>RF18/RF19</td><td>Acudiente entrega tarea en plazo</td><td>PDF &lt;=200 MiB</td><td>Abrir tarea → adjuntar → enviar</td><td>Entrega creada</td><td>Pendiente</td></tr><tr><td>CA005</td><td>RF09</td><td>Descargar boletín</td><td>student_id + firmas</td><td>Abrir boletín → descargar</td><td>PDF generado</td><td>Pendiente</td></tr><tr><td>CA006</td><td>RF14</td><td>Aviso recogida</td><td>curso con acudientes</td><td>Finalizar clase → avisar</td><td>Notificaciones creadas</td><td>Pendiente</td></tr></tbody></table><h3>7. CONCLUSIONES UNIDAD DE PRUEBAS</h3><p>La cobertura debe distinguir pruebas existentes de pruebas diseñadas. La ejecución de seguridad, rendimiento y aceptación requiere ambiente controlado y evidencia.</p></section><section id="p3"><h2>TERCERA PARTE — III. MEDICION DEL SOFTWARE</h2><h3>1. INTRODUCCION</h3><p>Se calculan métricas reproducibles del repositorio y se organizan contra los atributos de calidad exigidos por la plantilla.</p><h4>1.1. Objetivos</h4><p>Generar línea base del tamaño, estructura y atributos de calidad.</p><h4>1.2. Alcance</h4><p>Frontend/lib, backend Python sin venv, tests y modelos ORM.</p><h4>1.3. Tipos y herramientas</h4><p>Conteos directos, AST Python, scripts de análisis. SonarQube/JMeter/OWASP ZAP quedan como herramientas propuestas, no ejecutadas.</p><h3>2. MEDICION DEL SOFTWARE - ATRIBUTOS INTERNOS</h3><h4>2.1. Métricas de tamaño del código fuente</h4><table><thead><tr><th>Métrica</th><th>Método</th><th>Resultado</th><th>Interpretación</th></tr></thead><tbody><tr><td>LOC frontend Dart (sin blanco)</td><td>Cuenta no blanca de frontend/lib</td><td>14.611</td><td>Volumen de código cliente medido directamente.</td></tr><tr><td>LOC backend Python (sin blanco)</td><td>Cuenta no blanca excluyendo backend/venv</td><td>4.446</td><td>Volumen de código servidor medido directamente.</td></tr><tr><td>LOC total fuente (sin blanco)</td><td>Dart + Python</td><td>19.057</td><td>Tamaño combinado de las capas principales.</td></tr><tr><td>Archivos Dart productivos</td><td>find frontend/lib/**/*.dart</td><td>92</td><td>Fragmentación del frontend.</td></tr><tr><td>Pantallas Flutter</td><td>find frontend/lib/screens/**/*.dart</td><td>38</td><td>Cobertura de UI por módulo.</td></tr><tr><td>Servicios Flutter</td><td>find frontend/lib/services/**/*.dart</td><td>27</td><td>Componentización del acceso a datos/estado.</td></tr><tr><td>Modelos Dart</td><td>find frontend/lib/models/**/*.dart</td><td>16</td><td>Modelado del dominio cliente.</td></tr><tr><td>Widgets reutilizables</td><td>find frontend/lib/widgets/**/*.dart</td><td>7</td><td>Reutilización de UI.</td></tr><tr><td>Clases ORM SQLAlchemy</td><td>models.py AST</td><td>21</td><td>Entidades persistentes activas en código actual.</td></tr><tr><td>Endpoints FastAPI</td><td>main.py AST</td><td>62</td><td>Superficie funcional de API.</td></tr><tr><td>Revisiones Alembic</td><td>alembic/versions/*.py</td><td>13</td><td>Evolución del esquema.</td></tr><tr><td>Pruebas Flutter</td><td>frontend/test/*.dart</td><td>2</td><td>Pruebas automatizadas presentes.</td></tr></tbody></table><h4>2.2. Métricas de tamaño orientadas a clases</h4><table><thead><tr><th>Clase</th><th>WMC</th><th>DIT</th><th>CBO aprox.</th><th>Cohesión</th></tr></thead><tbody><tr><td>Administrador</td><td>0</td><td>1</td><td>0</td><td>Alta</td></tr><tr><td>Grado</td><td>0</td><td>1</td><td>2</td><td>Alta</td></tr><tr><td>Acudiente</td><td>0</td><td>1</td><td>0</td><td>Alta</td></tr><tr><td>Estudiante</td><td>0</td><td>1</td><td>2</td><td>Alta</td></tr><tr><td>Profesor</td><td>0</td><td>1</td><td>0</td><td>Alta</td></tr><tr><td>Curso</td><td>0</td><td>1</td><td>2</td><td>Alta</td></tr><tr><td>Matricula</td><td>0</td><td>1</td><td>2</td><td>Alta</td></tr><tr><td>Calificacion</td><td>0</td><td>1</td><td>2</td><td>Alta</td></tr><tr><td>Observacion</td><td>0</td><td>1</td><td>2</td><td>Alta</td></tr><tr><td>Asistencia</td><td>0</td><td>1</td><td>2</td><td>Alta</td></tr><tr><td>AsistenciaDocente</td><td>0</td><td>1</td><td>2</td><td>Alta</td></tr><tr><td>Convivencia</td><td>0</td><td>1</td><td>1</td><td>Alta</td></tr><tr><td>AlertaAlumno</td><td>0</td><td>1</td><td>1</td><td>Alta</td></tr><tr><td>Notificacion</td><td>0</td><td>1</td><td>5</td><td>Media</td></tr><tr><td>MaterialDidactico</td><td>0</td><td>1</td><td>1</td><td>Alta</td></tr><tr><td>Tarea</td><td>0</td><td>1</td><td>1</td><td>Alta</td></tr><tr><td>TareaEntrega</td><td>0</td><td>1</td><td>5</td><td>Media</td></tr><tr><td>Horario</td><td>0</td><td>1</td><td>1</td><td>Alta</td></tr><tr><td>Comunicado</td><td>0</td><td>1</td><td>0</td><td>Alta</td></tr><tr><td>EventoCalendario</td><td>0</td><td>1</td><td>1</td><td>Alta</td></tr><tr><td>ClaseFinalizada</td><td>0</td><td>1</td><td>2</td><td>Alta</td></tr></tbody></table><h3>3. MEDICION DE LA CALIDAD DEL SOFTWARE - ATRIBUTOS EXTERNOS</h3><table><thead><tr><th>Característica</th><th>Métrica</th><th>Fórmula/criterio</th><th>Resultado</th><th>Análisis</th></tr></thead><tbody><tr><td>Usabilidad</td><td>Cobertura responsive</td><td>4 resoluciones verificadas en código de pruebas / 4 previstas</td><td>100% del conjunto definido en responsive_test.dart</td><td>La suite recorre Login y los paneles por rol.</td></tr><tr><td>Portabilidad</td><td>Resoluciones cubiertas</td><td>4</td><td>4</td><td>320x568; 390x844; 768x1024; 1366x768.</td></tr><tr><td>Seguridad</td><td>Validaciones de entrada</td><td>Correo, contraseña, rol, score, periodo y archivos</td><td>Cobertura definida en schemas.py/main.py</td><td>La cobertura debe complementarse con pruebas negativas y escaneo.</td></tr><tr><td>Fiabilidad</td><td>Rutas de salud</td><td>2 endpoints: / y /health</td><td>2/2 documentados</td><td>/health consulta SELECT 1 en PostgreSQL.</td></tr><tr><td>Compatibilidad</td><td>Capas cliente-servidor</td><td>Flutter + HTTP REST + FastAPI + JSON/multipart</td><td>1 integración principal</td><td>No usa acceso directo del cliente a PostgreSQL.</td></tr><tr><td>Adecuación funcional</td><td>Requisitos funcionales documentados</td><td>28</td><td>28 trazados al código/endpoints o limitaciones</td><td>RF22, RF23 y RF28 tienen estado parcial/no activo de frontend.</td></tr></tbody></table><h3>4. CONCLUSIONES</h3><p>La línea base confirma 15,009 LOC no blancos de Dart, 4,445 de Python, 21 clases ORM, 62 endpoints y 13 migraciones. Los riesgos principales están en operación y seguridad más que en ausencia de módulos.</p></section><section id="p4"><h2>CUARTA PARTE — IV. ESTIMACION DEL SOFTWARE</h2><h3>1. Estimación por punto de función (PF)</h3><p>Estimación académica preliminar: 28 EI, 27 EQ, 7 EO, 21 ILF → <b>465 UFP sin ajuste</b>. Supuesto de productividad 10 h/PF: 4,650 h (~29.1 persona-mes). No es presupuesto real.</p><h3>2. Estimación por punto de caso de uso</h3><p>3 actores humanos complejos y 16 casos de uso medios: UUCP = 169. Con 20 h/PCU: 3,380 h (~21.1 persona-mes). Supuesto académico.</p><h3>3. Estimación por puntos de objetos</h3><p>38 pantallas, 27 servicios y 16 modelos Dart: PO = 135. Con 8 h/PO: 1,080 h (~6.8 persona-mes). Supuesto académico.</p><h3>4. Estimación por puntos de Historias</h3><table><thead><tr><th>Épica/módulo</th><th>Story Points</th></tr></thead><tbody><tr><td>Autenticación y sesión</td><td>13</td></tr><tr><td>Gestión usuarios/grados</td><td>13</td></tr><tr><td>Evaluación/boletines</td><td>18</td></tr><tr><td>Asistencia</td><td>11</td></tr><tr><td>Convivencia/alertas</td><td>13</td></tr><tr><td>Actividades/entregas</td><td>18</td></tr><tr><td>Materiales</td><td>8</td></tr><tr><td>Horario/calendario</td><td>8</td></tr><tr><td>Notificaciones/recogida</td><td>13</td></tr><tr><td>Formularios/campos</td><td>13</td></tr><tr><td>Reportes/configuración</td><td>8</td></tr><tr><td>PWA/portabilidad</td><td>6</td></tr><tr><td>QA/integración</td><td>10</td></tr></tbody></table><p>Total = <b>152 SP</b>. A 24 SP/sprint: aproximadamente <b>7 sprints</b>. La velocidad es una hipótesis, no una medición histórica.</p><h3>5. Estimación con una herramienta</h3><p>La plantilla solicita una herramienta digital, pero no existe evidencia de una corrida en las fuentes. La ejecución debe registrar tamaño, esfuerzo, tiempo, personas y costo.</p><h3>6. Análisis de los resultados</h3><table><thead><tr><th>Modelo</th><th>Tamaño</th><th>Esfuerzo referencial</th><th>Tiempo</th><th>Observación</th></tr></thead><tbody><tr><td>PF</td><td>465 UFP</td><td>4650 h</td><td>29.1 PM</td><td>Muy sensible al supuesto de productividad</td></tr><tr><td>PCU</td><td>169 UUCP</td><td>3380 h</td><td>21.1 PM</td><td>Depende del peso asignado a casos/actores</td></tr><tr><td>PO</td><td>135 PO</td><td>1080 h</td><td>6.8 PM</td><td>Mide principalmente componentes visuales/servicio</td></tr><tr><td>Historias</td><td>152 SP</td><td>depende de velocidad</td><td>~7 sprints</td><td>Preferible para seguimiento incremental</td></tr></tbody></table><h3>7. Conclusiones</h3><p>La estimación por historias es la opción más útil para planificación del equipo si se registra la velocidad real. PF, PCU y PO se conservan como comparadores académicos y deben recalibrarse con horas/costos reales.</p></section><section id="concl"><h2>CONCLUSIONES GENERALES</h2><p>EduCampus integra una aplicación Flutter Web/PWA con una API FastAPI y PostgreSQL. Los módulos centrales están implementados y existe una base de pruebas automática para arranque y responsive. La siguiente fase de QA debe completar pruebas de integración, seguridad, rendimiento y aceptación y dejar evidencia de ejecución.</p><h2>REFERENCIAS - BIBLIOGRAFICAS</h2><ol><li>Equipo EduCampus. <i>EduCampus_app (14).zip</i>. Código fuente.</li><li><i>Plantilla proyecto final.doc</i>. Guía académica de estructura.</li><li>Equipo EduCampus. <i>presentacion vieja.pdf</i>. Presentación inicial.</li><li>ISO/IEC 25010:2023 — Product quality model.</li></ol></section><footer style="text-align:center;color:#8492a9;padding:15px">EduCampus — Documento autocontenido</footer></main></body></html>
