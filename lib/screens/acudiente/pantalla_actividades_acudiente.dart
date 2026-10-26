@@ -1,6 +1,7 @@
-// ignore_for_file: avoid_web_libraries_in_flutter
 import 'dart:convert';
-import 'dart:html' as html;
+
+import '../../utils/plataforma.dart';
+
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -23,10 +24,12 @@ class ActividadesAcudienteScreen extends StatefulWidget {
   const ActividadesAcudienteScreen({super.key});
 
   @override
-  State<ActividadesAcudienteScreen> createState() => _ActividadesAcudienteScreenState();
+  State<ActividadesAcudienteScreen> createState() =>
+      _ActividadesAcudienteScreenState();
 }
 
-class _ActividadesAcudienteScreenState extends State<ActividadesAcudienteScreen> {
+class _ActividadesAcudienteScreenState
+    extends State<ActividadesAcudienteScreen> {
   bool _cargando = true;
   List<Student> _misEstudiantes = [];
   final Map<String, int> _cursoDeEstudiante = {};
@@ -46,8 +49,7 @@ class _ActividadesAcudienteScreenState extends State<ActividadesAcudienteScreen>
       await StudentService().cargarDesdeBackend();
     }
 
-    _misEstudiantes = StudentService()
-        .students
+    _misEstudiantes = StudentService().students
         .where((s) => s.acudienteCorreo.trim().toLowerCase() == correo)
         .toList();
 
@@ -56,10 +58,11 @@ class _ActividadesAcudienteScreenState extends State<ActividadesAcudienteScreen>
       final id = int.tryParse(estudiante.id);
       if (id == null) continue;
       try {
-        final uri = Uri.parse('${ApiConfig.baseUrl}/cursos/').replace(
-          queryParameters: {'student_id': id.toString()},
-        );
-        final respuesta = await http.get(uri).timeout(const Duration(seconds: 45));
+        final uri = Uri.parse('${ApiConfig.baseUrl}/cursos/')
+            .replace(queryParameters: {'student_id': id.toString()});
+        final respuesta = await http
+            .get(uri)
+            .timeout(const Duration(seconds: 45));
         if (respuesta.statusCode == 200) {
           final datos = jsonDecode(utf8.decode(respuesta.bodyBytes)) as List;
           for (final c in datos) {
@@ -84,7 +87,10 @@ class _ActividadesAcudienteScreenState extends State<ActividadesAcudienteScreen>
 
     if (_misEstudiantes.isEmpty) {
       return const Center(
-        child: Text('No se encontró un estudiante vinculado a tu cuenta.', style: TextStyle(color: AppColors.textSecondary)),
+        child: Text(
+          'No se encontró un estudiante vinculado a tu cuenta.',
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
       );
     }
 
@@ -95,7 +101,10 @@ class _ActividadesAcudienteScreenState extends State<ActividadesAcudienteScreen>
 
         if (actividades.isEmpty) {
           return const Center(
-            child: Text('Aún no hay actividades publicadas', style: TextStyle(color: AppColors.textSecondary)),
+            child: Text(
+              'Aún no hay actividades publicadas',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
           );
         }
 
@@ -108,20 +117,28 @@ class _ActividadesAcudienteScreenState extends State<ActividadesAcudienteScreen>
 
             final estudiantesDeEstaActividad = _misEstudiantes.where((s) {
               final id = int.tryParse(s.id);
-              return id != null && (_cursoDeEstudiante.containsKey('${s.id}_${a.cursoId}'));
+              return id != null &&
+                  (_cursoDeEstudiante.containsKey('${s.id}_${a.cursoId}'));
             }).toList();
 
-            if (estudiantesDeEstaActividad.isEmpty) return const SizedBox.shrink();
+            if (estudiantesDeEstaActividad.isEmpty)
+              return const SizedBox.shrink();
 
             final pendientes = estudiantesDeEstaActividad
-                .where((s) => ActividadesService().entregaDe(a.id, s.id) == null)
+                .where(
+                  (s) => ActividadesService().entregaDe(a.id, s.id) == null,
+                )
                 .length;
 
             return Container(
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: pendientes > 0 ? AppColors.danger.withOpacity(0.4) : const Color(0xFFE7E7EC)),
+                border: Border.all(
+                  color: pendientes > 0
+                      ? AppColors.danger.withOpacity(0.4)
+                      : const Color(0xFFE7E7EC),
+                ),
               ),
               child: ListTile(
                 contentPadding: const EdgeInsets.all(14),
@@ -130,20 +147,38 @@ class _ActividadesAcudienteScreenState extends State<ActividadesAcudienteScreen>
                   height: 42,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: (pendientes > 0 ? AppColors.danger : AppColors.success).withOpacity(0.1),
+                    color:
+                        (pendientes > 0 ? AppColors.danger : AppColors.success)
+                            .withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(Icons.assignment_rounded, color: pendientes > 0 ? AppColors.danger : AppColors.success),
+                  child: Icon(
+                    Icons.assignment_rounded,
+                    color: pendientes > 0
+                        ? AppColors.danger
+                        : AppColors.success,
+                  ),
                 ),
-                title: Text(a.titulo, style: const TextStyle(fontWeight: FontWeight.w600)),
-                subtitle: Text('Entrega: ${_fmt(a.fechaEntrega)}${pendientes > 0 ? ' · $pendientes pendiente(s)' : ''}',
-                    style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary)),
+                title: Text(
+                  a.titulo,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text(
+                  'Entrega: ${_fmt(a.fechaEntrega)}${pendientes > 0 ? ' · $pendientes pendiente(s)' : ''}',
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
                 trailing: const Icon(Icons.chevron_right_rounded),
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => _DetalleActividadAcudienteScreen(actividad: a, estudiantes: estudiantesDeEstaActividad),
+                      builder: (_) => _DetalleActividadAcudienteScreen(
+                        actividad: a,
+                        estudiantes: estudiantesDeEstaActividad,
+                      ),
                     ),
                   );
                 },
@@ -159,14 +194,18 @@ class _ActividadesAcudienteScreenState extends State<ActividadesAcudienteScreen>
 class _DetalleActividadAcudienteScreen extends StatelessWidget {
   final Actividad actividad;
   final List<Student> estudiantes;
-  const _DetalleActividadAcudienteScreen({required this.actividad, required this.estudiantes});
+  const _DetalleActividadAcudienteScreen({
+    required this.actividad,
+    required this.estudiantes,
+  });
 
   void _abrirEntrega(BuildContext context, Student estudiante) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _FormularioEntrega(actividad: actividad, estudiante: estudiante),
+      builder: (_) =>
+          _FormularioEntrega(actividad: actividad, estudiante: estudiante),
     );
   }
 
@@ -196,13 +235,19 @@ class _DetalleActividadAcudienteScreen extends StatelessWidget {
               children: [
                 Text(actividad.descripcion),
                 const SizedBox(height: 8),
-                Text('Entrega: ${_fmt(actividad.fechaEntrega)}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                Text(
+                  'Entrega: ${_fmt(actividad.fechaEntrega)}',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
                 const SizedBox(height: 4),
                 Text(
                   actividad.permiteVideo
                       ? 'Se acepta video, PDF, Word, PowerPoint, imagen o texto.'
                       : 'Se acepta PDF, Word, PowerPoint, imagen o texto.',
-                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ],
             ),
@@ -217,8 +262,13 @@ class _DetalleActividadAcudienteScreen extends StatelessWidget {
                   separatorBuilder: (_, __) => const SizedBox(height: 10),
                   itemBuilder: (context, index) {
                     final estudiante = estudiantes[index];
-                    final entrega = ActividadesService().entregaDe(actividad.id, estudiante.id);
-                    final plazoVencido = DateTime.now().isAfter(actividad.fechaEntrega);
+                    final entrega = ActividadesService().entregaDe(
+                      actividad.id,
+                      estudiante.id,
+                    );
+                    final plazoVencido = DateTime.now().isAfter(
+                      actividad.fechaEntrega,
+                    );
 
                     Color chipColor;
                     String etiqueta;
@@ -227,7 +277,8 @@ class _DetalleActividadAcudienteScreen extends StatelessWidget {
                       etiqueta = plazoVencido ? 'Plazo vencido' : 'Pendiente';
                     } else if (entrega.calificada) {
                       chipColor = AppColors.success;
-                      etiqueta = 'Calificada (${entrega.nota!.toStringAsFixed(1)})';
+                      etiqueta =
+                          'Calificada (${entrega.nota!.toStringAsFixed(1)})';
                     } else {
                       chipColor = AppColors.accent;
                       etiqueta = 'Entregado';
@@ -249,26 +300,53 @@ class _DetalleActividadAcudienteScreen extends StatelessWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(estudiante.nombreCompleto, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                    Text(
+                                      estudiante.nombreCompleto,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
                                     const SizedBox(height: 6),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                      decoration: BoxDecoration(color: chipColor.withOpacity(0.12), borderRadius: BorderRadius.circular(20)),
-                                      child: Text(etiqueta, style: TextStyle(color: chipColor, fontSize: 12, fontWeight: FontWeight.w600)),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: chipColor.withOpacity(0.12),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        etiqueta,
+                                        style: TextStyle(
+                                          color: chipColor,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
                                     ),
                                   ],
                                 ),
                               ),
                               if (entrega == null && !plazoVencido)
                                 ElevatedButton.icon(
-                                  onPressed: () => _abrirEntrega(context, estudiante),
-                                  icon: const Icon(Icons.upload_rounded, size: 16),
+                                  onPressed: () =>
+                                      _abrirEntrega(context, estudiante),
+                                  icon: const Icon(
+                                    Icons.upload_rounded,
+                                    size: 16,
+                                  ),
                                   label: const Text('Entregar'),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: AppColors.primary,
                                     foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 8,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
                                   ),
                                 ),
                             ],
@@ -277,19 +355,36 @@ class _DetalleActividadAcudienteScreen extends StatelessWidget {
                             const SizedBox(height: 10),
                             GestureDetector(
                               onTap: () => launchUrl(
-                                Uri.parse(ActividadesService().urlDescargaEntrega(entrega.id)),
+                                Uri.parse(
+                                  ActividadesService().urlDescargaEntrega(
+                                    entrega.id,
+                                  ),
+                                ),
                                 mode: LaunchMode.externalApplication,
                               ),
                               child: Container(
                                 padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.06), borderRadius: BorderRadius.circular(8)),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withOpacity(0.06),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                                 child: Row(
                                   children: [
-                                    const Icon(Icons.download_rounded, size: 15, color: AppColors.primary),
+                                    const Icon(
+                                      Icons.download_rounded,
+                                      size: 15,
+                                      color: AppColors.primary,
+                                    ),
                                     const SizedBox(width: 6),
                                     Expanded(
-                                      child: Text(entrega.nombreOriginal,
-                                          style: const TextStyle(fontSize: 12.5, color: AppColors.primary), overflow: TextOverflow.ellipsis),
+                                      child: Text(
+                                        entrega.nombreOriginal,
+                                        style: const TextStyle(
+                                          fontSize: 12.5,
+                                          color: AppColors.primary,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -297,27 +392,47 @@ class _DetalleActividadAcudienteScreen extends StatelessWidget {
                             ),
                             if (entrega.comentario.isNotEmpty) ...[
                               const SizedBox(height: 6),
-                              Text(entrega.comentario, style: const TextStyle(fontSize: 12.5)),
+                              Text(
+                                entrega.comentario,
+                                style: const TextStyle(fontSize: 12.5),
+                              ),
                             ],
                           ],
-                          if (entrega?.retroalimentacion != null && entrega!.retroalimentacion!.isNotEmpty) ...[
+                          if (entrega?.retroalimentacion != null &&
+                              entrega!.retroalimentacion!.isNotEmpty) ...[
                             const SizedBox(height: 10),
                             Container(
                               padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(color: AppColors.success.withOpacity(0.07), borderRadius: BorderRadius.circular(8)),
+                              decoration: BoxDecoration(
+                                color: AppColors.success.withOpacity(0.07),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const Row(
                                     children: [
-                                      Icon(Icons.check_circle_rounded, size: 14, color: AppColors.success),
+                                      Icon(
+                                        Icons.check_circle_rounded,
+                                        size: 14,
+                                        color: AppColors.success,
+                                      ),
                                       SizedBox(width: 6),
-                                      Text('Retroalimentación del docente:',
-                                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.success)),
+                                      Text(
+                                        'Retroalimentación del docente:',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.success,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                   const SizedBox(height: 4),
-                                  Text(entrega.retroalimentacion!, style: const TextStyle(fontSize: 12.5)),
+                                  Text(
+                                    entrega.retroalimentacion!,
+                                    style: const TextStyle(fontSize: 12.5),
+                                  ),
                                 ],
                               ),
                             ),
@@ -337,7 +452,17 @@ class _DetalleActividadAcudienteScreen extends StatelessWidget {
 }
 
 const _extensionesVideo = ['.mp4', '.mov', '.avi', '.mkv', '.webm'];
-const _extensionesDocumento = ['.pdf', '.doc', '.docx', '.ppt', '.pptx', '.jpg', '.jpeg', '.png', '.txt'];
+const _extensionesDocumento = [
+  '.pdf',
+  '.doc',
+  '.docx',
+  '.ppt',
+  '.pptx',
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.txt',
+];
 
 class _FormularioEntrega extends StatefulWidget {
   final Actividad actividad;
@@ -360,25 +485,16 @@ class _FormularioEntregaState extends State<_FormularioEntrega> {
     super.dispose();
   }
 
-  void _pickFile() {
-    final extensiones = [..._extensionesDocumento, if (widget.actividad.permiteVideo) ..._extensionesVideo];
-    final input = html.FileUploadInputElement()
-      ..accept = extensiones.join(',')
-      ..click();
-    input.onChange.listen((_) {
-      final file = input.files?.first;
-      if (file == null) return;
-      final reader = html.FileReader();
-      reader.readAsArrayBuffer(file);
-      reader.onLoadEnd.listen((_) {
-        final result = reader.result;
-        if (result is List<int>) {
-          setState(() {
-            _archivoNombre = file.name;
-            _archivoBytes = Uint8List.fromList(result);
-          });
-        }
-      });
+  Future<void> _pickFile() async {
+    final extensiones = [
+      ..._extensionesDocumento,
+      if (widget.actividad.permiteVideo) ..._extensionesVideo,
+    ];
+    final archivo = await seleccionarArchivo(extensiones: extensiones);
+    if (archivo == null || !mounted) return;
+    setState(() {
+      _archivoNombre = archivo.nombre;
+      _archivoBytes = archivo.bytes;
     });
   }
 
@@ -410,7 +526,8 @@ class _FormularioEntregaState extends State<_FormularioEntrega> {
 
     if (error != null) {
       setState(() => _guardando = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error)));
       return;
     }
 
@@ -420,7 +537,9 @@ class _FormularioEntregaState extends State<_FormularioEntrega> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -437,30 +556,58 @@ class _FormularioEntregaState extends State<_FormularioEntrega> {
                   width: 40,
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 14),
-                  decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(4)),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
                 ),
               ),
-              Text('Entregar tarea · ${widget.estudiante.nombreCompleto}',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              Text(
+                'Entregar tarea · ${widget.estudiante.nombreCompleto}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
               const SizedBox(height: 16),
-              const Text('ARCHIVO',
-                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 0.6)),
+              const Text(
+                'ARCHIVO',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textSecondary,
+                  letterSpacing: 0.6,
+                ),
+              ),
               const SizedBox(height: 6),
               GestureDetector(
                 onTap: _pickFile,
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 13,
+                  ),
                   decoration: BoxDecoration(
-                    color: _archivoNombre != null ? AppColors.primary.withOpacity(0.06) : const Color(0xFFF3F4F7),
+                    color: _archivoNombre != null
+                        ? AppColors.primary.withOpacity(0.06)
+                        : const Color(0xFFF3F4F7),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: _archivoNombre != null ? AppColors.primary.withOpacity(0.35) : Colors.transparent),
+                    border: Border.all(
+                      color: _archivoNombre != null
+                          ? AppColors.primary.withOpacity(0.35)
+                          : Colors.transparent,
+                    ),
                   ),
                   child: Row(
                     children: [
                       Icon(
-                        _archivoNombre != null ? Icons.check_circle_rounded : Icons.upload_file_rounded,
-                        color: _archivoNombre != null ? AppColors.success : AppColors.textSecondary,
+                        _archivoNombre != null
+                            ? Icons.check_circle_rounded
+                            : Icons.upload_file_rounded,
+                        color: _archivoNombre != null
+                            ? AppColors.success
+                            : AppColors.textSecondary,
                         size: 20,
                       ),
                       const SizedBox(width: 10),
@@ -470,7 +617,12 @@ class _FormularioEntregaState extends State<_FormularioEntrega> {
                               (widget.actividad.permiteVideo
                                   ? 'Video, PDF, Word, PowerPoint, imagen o texto'
                                   : 'PDF, Word, PowerPoint, imagen o texto'),
-                          style: TextStyle(color: _archivoNombre != null ? AppColors.textPrimary : AppColors.textSecondary, fontSize: 13.5),
+                          style: TextStyle(
+                            color: _archivoNombre != null
+                                ? AppColors.textPrimary
+                                : AppColors.textSecondary,
+                            fontSize: 13.5,
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -494,10 +646,19 @@ class _FormularioEntregaState extends State<_FormularioEntrega> {
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                   child: _guardando
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
                       : const Text('Enviar entrega'),
                 ),
               ),

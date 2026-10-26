@@ -1,9 +1,12 @@
-// ignore_for_file: avoid_web_libraries_in_flutter
 import 'dart:convert';
-import 'dart:html' as html;
+
+import '../../utils/plataforma.dart';
+
 import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+
 import '../../core/theme/colores_app.dart';
 import '../../models/material_didactico.dart';
 import '../../services/api_config.dart';
@@ -21,14 +24,8 @@ class _Curso {
 String _fmt(DateTime f) =>
     '${f.day.toString().padLeft(2, '0')}/${f.month.toString().padLeft(2, '0')}/${f.year}';
 
-void _descargarArchivo(String nombre, Uint8List bytes) {
-  final blob = html.Blob([bytes]);
-  final url = html.Url.createObjectUrlFromBlob(blob);
-  html.AnchorElement(href: url)
-    ..setAttribute('download', nombre)
-    ..click();
-  html.Url.revokeObjectUrl(url);
-}
+Future<void> _descargarArchivo(String nombre, Uint8List bytes) =>
+    descargarBytes(nombre, bytes);
 
 class MaterialesScreen extends StatefulWidget {
   const MaterialesScreen({super.key});
@@ -60,32 +57,43 @@ class _MaterialesScreenState extends State<MaterialesScreen> {
         final uri = Uri.parse('${ApiConfig.baseUrl}/cursos/').replace(
           queryParameters: {'instructor_id': sesion!.usuarioId.toString()},
         );
-        final respuesta = await http.get(uri).timeout(const Duration(seconds: 45));
+        final respuesta = await http
+            .get(uri)
+            .timeout(const Duration(seconds: 45));
         if (respuesta.statusCode == 200) {
           final datos = jsonDecode(utf8.decode(respuesta.bodyBytes)) as List;
-          _cursos = datos.map((c) => _Curso(id: c['id'] as int, title: c['title'] as String)).toList();
+          _cursos = datos
+              .map(
+                (c) => _Curso(id: c['id'] as int, title: c['title'] as String),
+              )
+              .toList();
         }
       } else {
         if (StudentService().students.isEmpty) {
           await StudentService().cargarDesdeBackend();
         }
-        final misHijos = StudentService()
-            .students
-            .where((s) => s.acudienteCorreo.trim().toLowerCase() == sesion?.correo)
+        final misHijos = StudentService().students
+            .where(
+              (s) => s.acudienteCorreo.trim().toLowerCase() == sesion?.correo,
+            )
             .toList();
 
         final cursosDeHijos = <int, _Curso>{};
         for (final hijo in misHijos) {
           final id = int.tryParse(hijo.id);
           if (id == null) continue;
-          final uri = Uri.parse('${ApiConfig.baseUrl}/cursos/').replace(
-            queryParameters: {'student_id': id.toString()},
-          );
-          final respuesta = await http.get(uri).timeout(const Duration(seconds: 45));
+          final uri = Uri.parse('${ApiConfig.baseUrl}/cursos/')
+              .replace(queryParameters: {'student_id': id.toString()});
+          final respuesta = await http
+              .get(uri)
+              .timeout(const Duration(seconds: 45));
           if (respuesta.statusCode == 200) {
             final datos = jsonDecode(utf8.decode(respuesta.bodyBytes)) as List;
             for (final c in datos) {
-              final curso = _Curso(id: c['id'] as int, title: c['title'] as String);
+              final curso = _Curso(
+                id: c['id'] as int,
+                title: c['title'] as String,
+              );
               cursosDeHijos[curso.id] = curso;
             }
           }
@@ -97,7 +105,9 @@ class _MaterialesScreenState extends State<MaterialesScreen> {
         _tituloCurso[c.id] = c.title;
       }
 
-      await MaterialService().cargarPorCursos(_cursos.map((c) => c.id).toList());
+      await MaterialService().cargarPorCursos(
+        _cursos.map((c) => c.id).toList(),
+      );
     } catch (_) {}
 
     if (mounted) setState(() => _cargando = false);
@@ -120,7 +130,9 @@ class _MaterialesScreenState extends State<MaterialesScreen> {
   }
 
   Future<void> _confirmarEliminar(
-      BuildContext context, MaterialDidactico m) async {
+    BuildContext context,
+    MaterialDidactico m,
+  ) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -128,12 +140,15 @@ class _MaterialesScreenState extends State<MaterialesScreen> {
         content: Text('¿Eliminar "${m.titulo}"?'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancelar')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Eliminar',
-                style: TextStyle(color: AppColors.danger)),
+            child: const Text(
+              'Eliminar',
+              style: TextStyle(color: AppColors.danger),
+            ),
           ),
         ],
       ),
@@ -141,7 +156,8 @@ class _MaterialesScreenState extends State<MaterialesScreen> {
     if (ok == true) {
       final error = await MaterialService().eliminar(m.id);
       if (error != null && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error)));
       }
     }
   }
@@ -162,8 +178,10 @@ class _MaterialesScreenState extends State<MaterialesScreen> {
             final materiales = service.materiales;
             if (materiales.isEmpty) {
               return const Center(
-                child: Text('Aún no hay materiales publicados',
-                    style: TextStyle(color: AppColors.textSecondary)),
+                child: Text(
+                  'Aún no hay materiales publicados',
+                  style: TextStyle(color: AppColors.textSecondary),
+                ),
               );
             }
             return ListView.separated(
@@ -202,52 +220,65 @@ class _MaterialesScreenState extends State<MaterialesScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(m.titulo,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w600)),
+                            Text(
+                              m.titulo,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                             const SizedBox(height: 2),
                             Text(
                               '${_tituloCurso[m.cursoId] ?? 'Curso'}${m.materia.isNotEmpty ? ' · ${m.materia}' : ''} · ${_fmt(m.fecha)}',
                               style: const TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 12.5),
+                                color: AppColors.textSecondary,
+                                fontSize: 12.5,
+                              ),
                             ),
                             if (m.descripcion.isNotEmpty) ...[
                               const SizedBox(height: 6),
-                              Text(m.descripcion,
-                                  style: const TextStyle(fontSize: 13.5)),
+                              Text(
+                                m.descripcion,
+                                style: const TextStyle(fontSize: 13.5),
+                              ),
                             ],
                             if (m.tieneArchivo) ...[
                               const SizedBox(height: 8),
                               GestureDetector(
                                 onTap: () => _descargarArchivo(
-                                    m.archivoNombre, m.archivoBytes!),
+                                  m.archivoNombre,
+                                  m.archivoBytes!,
+                                ),
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 5),
+                                    horizontal: 10,
+                                    vertical: 5,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color:
-                                        AppColors.primary.withOpacity(0.08),
+                                    color: AppColors.primary.withOpacity(0.08),
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
-                                        color: AppColors.primary
-                                            .withOpacity(0.25)),
+                                      color: AppColors.primary.withOpacity(
+                                        0.25,
+                                      ),
+                                    ),
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       const Icon(
-                                          Icons.download_rounded,
-                                          size: 15,
-                                          color: AppColors.primary),
+                                        Icons.download_rounded,
+                                        size: 15,
+                                        color: AppColors.primary,
+                                      ),
                                       const SizedBox(width: 5),
                                       Flexible(
                                         child: Text(
                                           m.archivoNombre,
                                           style: const TextStyle(
-                                              fontSize: 12,
-                                              color: AppColors.primary,
-                                              fontWeight: FontWeight.w600),
+                                            fontSize: 12,
+                                            color: AppColors.primary,
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
@@ -261,9 +292,10 @@ class _MaterialesScreenState extends State<MaterialesScreen> {
                               Text(
                                 m.enlace,
                                 style: const TextStyle(
-                                    color: AppColors.primary,
-                                    fontSize: 13,
-                                    decoration: TextDecoration.underline),
+                                  color: AppColors.primary,
+                                  fontSize: 13,
+                                  decoration: TextDecoration.underline,
+                                ),
                               ),
                             ],
                           ],
@@ -271,8 +303,10 @@ class _MaterialesScreenState extends State<MaterialesScreen> {
                       ),
                       if (_esDocente)
                         IconButton(
-                          icon: const Icon(Icons.delete_outline_rounded,
-                              color: AppColors.danger),
+                          icon: const Icon(
+                            Icons.delete_outline_rounded,
+                            color: AppColors.danger,
+                          ),
                           onPressed: () => _confirmarEliminar(context, m),
                         ),
                     ],
@@ -325,25 +359,27 @@ class _FormularioMaterialState extends State<_FormularioMaterial> {
     super.dispose();
   }
 
-  void _pickFile() {
-    final input = html.FileUploadInputElement()
-      ..accept =
-          '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.zip'
-      ..click();
-    input.onChange.listen((_) {
-      final file = input.files?.first;
-      if (file == null) return;
-      final reader = html.FileReader();
-      reader.readAsArrayBuffer(file);
-      reader.onLoadEnd.listen((_) {
-        final result = reader.result;
-        if (result is List<int>) {
-          setState(() {
-            _archivoNombre = file.name;
-            _archivoBytes = Uint8List.fromList(result);
-          });
-        }
-      });
+  Future<void> _pickFile() async {
+    final archivo = await seleccionarArchivo(
+      extensiones: const [
+        '.pdf',
+        '.doc',
+        '.docx',
+        '.ppt',
+        '.pptx',
+        '.xls',
+        '.xlsx',
+        '.txt',
+        '.jpg',
+        '.jpeg',
+        '.png',
+        '.zip',
+      ],
+    );
+    if (archivo == null || !mounted) return;
+    setState(() {
+      _archivoNombre = archivo.nombre;
+      _archivoBytes = archivo.bytes;
     });
   }
 
@@ -366,7 +402,8 @@ class _FormularioMaterialState extends State<_FormularioMaterial> {
 
     if (error != null) {
       setState(() => _guardando = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error)));
       return;
     }
 
@@ -376,7 +413,9 @@ class _FormularioMaterialState extends State<_FormularioMaterial> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -396,21 +435,24 @@ class _FormularioMaterialState extends State<_FormularioMaterial> {
                     height: 4,
                     margin: const EdgeInsets.only(bottom: 14),
                     decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(4)),
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                   ),
                 ),
-                const Text('Nuevo material',
-                    style:
-                        TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const Text(
+                  'Nuevo material',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
                 const SizedBox(height: 16),
                 LabeledTextField(
                   controller: _tituloC,
                   label: 'Título',
                   hint: 'Ej: Guía de fracciones',
                   icon: Icons.title_rounded,
-                  validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? 'Ingresa un título' : null,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Ingresa un título'
+                      : null,
                 ),
                 const SizedBox(height: 12),
                 LabeledTextField(
@@ -420,26 +462,35 @@ class _FormularioMaterialState extends State<_FormularioMaterial> {
                   icon: Icons.menu_book_rounded,
                 ),
                 const SizedBox(height: 12),
-                const Text('CURSO',
-                    style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textSecondary,
-                        letterSpacing: 0.6)),
+                const Text(
+                  'CURSO',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textSecondary,
+                    letterSpacing: 0.6,
+                  ),
+                ),
                 const SizedBox(height: 6),
                 DropdownButtonFormField<int>(
                   initialValue: _cursoId,
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: const Color(0xFFF3F4F7),
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
                     border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none),
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide.none,
+                    ),
                   ),
                   items: widget.cursos
-                      .map((c) => DropdownMenuItem(value: c.id, child: Text(c.title)))
+                      .map(
+                        (c) =>
+                            DropdownMenuItem(value: c.id, child: Text(c.title)),
+                      )
                       .toList(),
                   onChanged: (v) => setState(() => _cursoId = v ?? _cursoId),
                 ),
@@ -459,19 +510,24 @@ class _FormularioMaterialState extends State<_FormularioMaterial> {
                 ),
                 const SizedBox(height: 12),
                 // ── ADJUNTO ──
-                const Text('ARCHIVO ADJUNTO',
-                    style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textSecondary,
-                        letterSpacing: 0.6)),
+                const Text(
+                  'ARCHIVO ADJUNTO',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textSecondary,
+                    letterSpacing: 0.6,
+                  ),
+                ),
                 const SizedBox(height: 6),
                 GestureDetector(
                   onTap: _pickFile,
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 13),
+                      horizontal: 14,
+                      vertical: 13,
+                    ),
                     decoration: BoxDecoration(
                       color: _archivoNombre != null
                           ? AppColors.primary.withOpacity(0.06)
@@ -497,7 +553,8 @@ class _FormularioMaterialState extends State<_FormularioMaterial> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            _archivoNombre ?? 'Seleccionar archivo (PDF, Word, etc.)',
+                            _archivoNombre ??
+                                'Seleccionar archivo (PDF, Word, etc.)',
                             style: TextStyle(
                               color: _archivoNombre != null
                                   ? AppColors.textPrimary
@@ -513,8 +570,11 @@ class _FormularioMaterialState extends State<_FormularioMaterial> {
                               _archivoNombre = null;
                               _archivoBytes = null;
                             }),
-                            child: const Icon(Icons.close_rounded,
-                                size: 18, color: AppColors.textSecondary),
+                            child: const Icon(
+                              Icons.close_rounded,
+                              size: 18,
+                              color: AppColors.textSecondary,
+                            ),
                           ),
                       ],
                     ),
@@ -530,13 +590,17 @@ class _FormularioMaterialState extends State<_FormularioMaterial> {
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                     child: _guardando
                         ? const SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
                           )
                         : const Text('Publicar material'),
                   ),

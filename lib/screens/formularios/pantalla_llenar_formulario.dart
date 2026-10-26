@@ -1,9 +1,10 @@
-// ignore_for_file: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
+import '../../utils/plataforma.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+
 import '../../core/theme/colores_app.dart';
 import '../../models/estudiante.dart';
 import '../../models/formulario.dart';
@@ -86,11 +87,13 @@ class _LlenarFormularioScreenState extends State<LlenarFormularioScreen> {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancelar')),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
           TextButton(
-              onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
-              child: const Text('Agregar')),
+            onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+            child: const Text('Agregar'),
+          ),
         ],
       ),
     );
@@ -118,7 +121,8 @@ class _LlenarFormularioScreenState extends State<LlenarFormularioScreen> {
   Future<void> _guardarPdf() async {
     final doc = pw.Document();
     final fecha = DateTime.now();
-    final fechaStr = '${fecha.day.toString().padLeft(2, '0')}/${fecha.month.toString().padLeft(2, '0')}/${fecha.year}';
+    final fechaStr =
+        '${fecha.day.toString().padLeft(2, '0')}/${fecha.month.toString().padLeft(2, '0')}/${fecha.year}';
 
     const anchoPagina = PdfPageFormat.a4;
     final anchoUtil = anchoPagina.availableWidth - 64;
@@ -136,7 +140,10 @@ class _LlenarFormularioScreenState extends State<LlenarFormularioScreen> {
               style: pw.TextStyle(fontSize: 18, font: pw.Font.helveticaBold()),
             ),
             pw.SizedBox(height: 4),
-            pw.Text('Fecha: $fechaStr', style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey600)),
+            pw.Text(
+              'Fecha: $fechaStr',
+              style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey600),
+            ),
             pw.SizedBox(height: 20),
             pw.Container(
               padding: const pw.EdgeInsets.all(16),
@@ -166,10 +173,15 @@ class _LlenarFormularioScreenState extends State<LlenarFormularioScreen> {
                           pw.SizedBox(height: 4),
                           pw.Container(
                             width: double.infinity,
-                            padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                            padding: const pw.EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 10,
+                            ),
                             decoration: pw.BoxDecoration(
                               color: PdfColors.grey100,
-                              borderRadius: const pw.BorderRadius.all(pw.Radius.circular(6)),
+                              borderRadius: const pw.BorderRadius.all(
+                                pw.Radius.circular(6),
+                              ),
                             ),
                             child: pw.Text(
                               c.controller.text.trim(),
@@ -188,13 +200,10 @@ class _LlenarFormularioScreenState extends State<LlenarFormularioScreen> {
     );
 
     final bytes = await doc.save();
-    final blob = html.Blob([bytes], 'application/pdf');
-    final url = html.Url.createObjectUrlFromBlob(blob);
-    html.AnchorElement(href: url)
-      ..setAttribute(
-          'download', '${widget.plantilla.nombre.replaceAll(' ', '_')}.pdf')
-      ..click();
-    html.Url.revokeObjectUrl(url);
+    await descargarBytes(
+      '${widget.plantilla.nombre.replaceAll(' ', '_')}.pdf',
+      bytes,
+    );
   }
 
   @override
@@ -221,12 +230,15 @@ class _LlenarFormularioScreenState extends State<LlenarFormularioScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('BUSCAR ESTUDIANTE',
-                          style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textSecondary,
-                              letterSpacing: 0.6)),
+                      const Text(
+                        'BUSCAR ESTUDIANTE',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textSecondary,
+                          letterSpacing: 0.6,
+                        ),
+                      ),
                       const SizedBox(height: 6),
                       RawAutocomplete<Student>(
                         textEditingController: _busqueda,
@@ -234,8 +246,7 @@ class _LlenarFormularioScreenState extends State<LlenarFormularioScreen> {
                         displayStringForOption: (s) => s.nombreCompleto,
                         optionsBuilder: (v) => service.searchByName(v.text),
                         onSelected: _seleccionar,
-                        fieldViewBuilder: (context, ctrl, foco, _) =>
-                            TextField(
+                        fieldViewBuilder: (context, ctrl, foco, _) => TextField(
                           controller: ctrl,
                           focusNode: foco,
                           decoration: InputDecoration(
@@ -251,54 +262,64 @@ class _LlenarFormularioScreenState extends State<LlenarFormularioScreen> {
                         ),
                         optionsViewBuilder: (context, onSelected, options) =>
                             Align(
-                          alignment: Alignment.topLeft,
-                          child: Material(
-                            elevation: 4,
-                            borderRadius: BorderRadius.circular(10),
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(
-                                  maxWidth: 500, maxHeight: 240),
-                              child: ListView(
-                                padding: EdgeInsets.zero,
-                                shrinkWrap: true,
-                                children: [
-                                  for (final s in options)
-                                    ListTile(
-                                      dense: true,
-                                      leading: const Icon(
-                                          Icons.person_rounded, size: 20),
-                                      title: Text(s.nombreCompleto),
-                                      subtitle: Text(s.grado),
-                                      onTap: () => onSelected(s),
-                                    ),
-                                ],
+                              alignment: Alignment.topLeft,
+                              child: Material(
+                                elevation: 4,
+                                borderRadius: BorderRadius.circular(10),
+                                child: ConstrainedBox(
+                                  constraints: const BoxConstraints(
+                                    maxWidth: 500,
+                                    maxHeight: 240,
+                                  ),
+                                  child: ListView(
+                                    padding: EdgeInsets.zero,
+                                    shrinkWrap: true,
+                                    children: [
+                                      for (final s in options)
+                                        ListTile(
+                                          dense: true,
+                                          leading: const Icon(
+                                            Icons.person_rounded,
+                                            size: 20,
+                                          ),
+                                          title: Text(s.nombreCompleto),
+                                          subtitle: Text(s.grado),
+                                          onTap: () => onSelected(s),
+                                        ),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                        ),
                       ),
                       if (service.students.isEmpty) ...[
                         const SizedBox(height: 8),
                         const Text(
                           'Aún no hay estudiantes registrados.',
                           style: TextStyle(
-                              color: AppColors.textSecondary, fontSize: 12.5),
+                            color: AppColors.textSecondary,
+                            fontSize: 12.5,
+                          ),
                         ),
                       ],
                       if (_seleccionado != null) ...[
                         const SizedBox(height: 12),
                         Row(
                           children: [
-                            const Icon(Icons.check_circle_rounded,
-                                size: 18, color: AppColors.success),
+                            const Icon(
+                              Icons.check_circle_rounded,
+                              size: 18,
+                              color: AppColors.success,
+                            ),
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
                                 'Datos de ${_seleccionado!.nombreCompleto} cargados. Puedes editarlos antes de copiar.',
                                 style: const TextStyle(
-                                    color: AppColors.success,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600),
+                                  color: AppColors.success,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                           ],
@@ -330,9 +351,9 @@ class _LlenarFormularioScreenState extends State<LlenarFormularioScreen> {
                                     hint: c.definicion == null
                                         ? 'Campo adicional'
                                         : c.definicion!.origen ==
-                                                OrigenDato.manual
-                                            ? 'Escribe aquí'
-                                            : 'Se llena al elegir estudiante',
+                                              OrigenDato.manual
+                                        ? 'Escribe aquí'
+                                        : 'Se llena al elegir estudiante',
                                     icon: c.definicion == null
                                         ? Icons.add_circle_outline_rounded
                                         : Icons.text_fields_rounded,
@@ -345,8 +366,10 @@ class _LlenarFormularioScreenState extends State<LlenarFormularioScreen> {
                                         tooltip: 'Quitar campo',
                                         iconSize: 18,
                                         onPressed: () => _quitarExtra(c),
-                                        icon: const Icon(Icons.close_rounded,
-                                            color: AppColors.danger),
+                                        icon: const Icon(
+                                          Icons.close_rounded,
+                                          color: AppColors.danger,
+                                        ),
                                       ),
                                     ),
                                 ],
@@ -370,8 +393,10 @@ class _LlenarFormularioScreenState extends State<LlenarFormularioScreen> {
                     ),
                     OutlinedButton.icon(
                       onPressed: _limpiar,
-                      icon: const Icon(Icons.cleaning_services_rounded,
-                          size: 18),
+                      icon: const Icon(
+                        Icons.cleaning_services_rounded,
+                        size: 18,
+                      ),
                       label: const Text('Limpiar'),
                     ),
                     OutlinedButton.icon(
@@ -395,13 +420,13 @@ class _LlenarFormularioScreenState extends State<LlenarFormularioScreen> {
   }
 
   Widget _tarjeta({required Widget child}) => Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE7E7EC)),
-        ),
-        child: child,
-      );
+    width: double.infinity,
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: const Color(0xFFE7E7EC)),
+    ),
+    child: child,
+  );
 }

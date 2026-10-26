@@ -1,6 +1,6 @@
-// ignore_for_file: avoid_web_libraries_in_flutter
 import 'dart:convert';
-import 'dart:html' as html;
+
+import '../../utils/plataforma.dart';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -30,7 +30,8 @@ class EvaluacionDocenteScreen extends StatefulWidget {
   const EvaluacionDocenteScreen({super.key});
 
   @override
-  State<EvaluacionDocenteScreen> createState() => _EvaluacionDocenteScreenState();
+  State<EvaluacionDocenteScreen> createState() =>
+      _EvaluacionDocenteScreenState();
 }
 
 class _EvaluacionDocenteScreenState extends State<EvaluacionDocenteScreen> {
@@ -50,10 +51,14 @@ class _EvaluacionDocenteScreenState extends State<EvaluacionDocenteScreen> {
     final esAcudiente = sesion?.rol == 'acudiente';
 
     final estudiantes = esAcudiente
-        ? StudentService().students.where((s) => s.acudienteCorreo.trim().toLowerCase() == sesion?.correo)
+        ? StudentService().students.where(
+            (s) => s.acudienteCorreo.trim().toLowerCase() == sesion?.correo,
+          )
         : StudentService().students;
 
-    await EvaluacionService().cargarPorEstudiantes(estudiantes.map((s) => s.id).toList());
+    await EvaluacionService().cargarPorEstudiantes(
+      estudiantes.map((s) => s.id).toList(),
+    );
   }
 
   @override
@@ -69,8 +74,12 @@ class _EvaluacionDocenteScreenState extends State<EvaluacionDocenteScreen> {
 
         final estudiantes = esAcudiente
             ? estSvc.students
-                .where((s) => s.acudienteCorreo.trim().toLowerCase() == sesion?.correo)
-                .toList()
+                  .where(
+                    (s) =>
+                        s.acudienteCorreo.trim().toLowerCase() ==
+                        sesion?.correo,
+                  )
+                  .toList()
             : estSvc.students;
 
         if (estudiantes.isEmpty) {
@@ -88,29 +97,44 @@ class _EvaluacionDocenteScreenState extends State<EvaluacionDocenteScreen> {
         }
 
         // Separar preescolar y primaria
-        final preescolarList =
-            estudiantes.where((s) => _esPreescolar(s.grado)).toList();
-        final primariaList =
-            estudiantes.where((s) => !_esPreescolar(s.grado)).toList();
+        final preescolarList = estudiantes
+            .where((s) => _esPreescolar(s.grado))
+            .toList();
+        final primariaList = estudiantes
+            .where((s) => !_esPreescolar(s.grado))
+            .toList();
 
         return ListView(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
           children: [
             if (preescolarList.isNotEmpty) ...[
-              _seccionHeader('🌱 Preescolar',
-                  'Evaluación por logros y observaciones',
-                  color: Colors.teal),
+              _seccionHeader(
+                '🌱 Preescolar',
+                'Evaluación por logros y observaciones',
+                color: Colors.teal,
+              ),
               const SizedBox(height: 10),
               ...preescolarList.map(
-                  (s) => _tarjetaEstudiante(context, s, evalSvc, esPreescolar: true)),
+                (s) =>
+                    _tarjetaEstudiante(context, s, evalSvc, esPreescolar: true),
+              ),
               const SizedBox(height: 20),
             ],
             if (primariaList.isNotEmpty) ...[
-              _seccionHeader('📚 Primaria', 'Evaluación con notas numéricas (1.0 – 5.0)',
-                  color: AppColors.primary),
+              _seccionHeader(
+                '📚 Primaria',
+                'Evaluación con notas numéricas (1.0 – 5.0)',
+                color: AppColors.primary,
+              ),
               const SizedBox(height: 10),
               ...primariaList.map(
-                  (s) => _tarjetaEstudiante(context, s, evalSvc, esPreescolar: false)),
+                (s) => _tarjetaEstudiante(
+                  context,
+                  s,
+                  evalSvc,
+                  esPreescolar: false,
+                ),
+              ),
             ],
           ],
         );
@@ -118,8 +142,11 @@ class _EvaluacionDocenteScreenState extends State<EvaluacionDocenteScreen> {
     );
   }
 
-  Widget _seccionHeader(String titulo, String subtitulo,
-      {required Color color}) {
+  Widget _seccionHeader(
+    String titulo,
+    String subtitulo, {
+    required Color color,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
@@ -133,20 +160,29 @@ class _EvaluacionDocenteScreenState extends State<EvaluacionDocenteScreen> {
             width: 4,
             height: 36,
             decoration: BoxDecoration(
-                color: color, borderRadius: BorderRadius.circular(4)),
+              color: color,
+              borderRadius: BorderRadius.circular(4),
+            ),
           ),
           const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(titulo,
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: color)),
-              Text(subtitulo,
-                  style: const TextStyle(
-                      fontSize: 12, color: AppColors.textSecondary)),
+              Text(
+                titulo,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: color,
+                ),
+              ),
+              Text(
+                subtitulo,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                ),
+              ),
             ],
           ),
         ],
@@ -155,8 +191,11 @@ class _EvaluacionDocenteScreenState extends State<EvaluacionDocenteScreen> {
   }
 
   Widget _tarjetaEstudiante(
-      BuildContext context, Student s, EvaluacionService evalSvc,
-      {required bool esPreescolar}) {
+    BuildContext context,
+    Student s,
+    EvaluacionService evalSvc, {
+    required bool esPreescolar,
+  }) {
     final registros = evalSvc.porEstudiante(s.id);
     final promedio = esPreescolar ? null : evalSvc.promedioPorEstudiante(s.id);
     final cantLogros = registros.where((r) => r.logro.trim().isNotEmpty).length;
@@ -175,11 +214,15 @@ class _EvaluacionDocenteScreenState extends State<EvaluacionDocenteScreen> {
             child: Text(
               s.nombres.isNotEmpty ? s.nombres[0].toUpperCase() : '?',
               style: const TextStyle(
-                  color: AppColors.primary, fontWeight: FontWeight.bold),
+                color: AppColors.primary,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
-          title:
-              Text(s.nombreCompleto, style: const TextStyle(fontWeight: FontWeight.w600)),
+          title: Text(
+            s.nombreCompleto,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
           subtitle: Text(
             esPreescolar
                 ? '${s.grado} · $cantLogros logro(s) registrado(s)'
@@ -190,8 +233,10 @@ class _EvaluacionDocenteScreenState extends State<EvaluacionDocenteScreen> {
             children: [
               if (!esPreescolar && promedio != null)
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
                     color: _colorPromedio(promedio).withOpacity(0.12),
                     borderRadius: BorderRadius.circular(20),
@@ -199,14 +244,17 @@ class _EvaluacionDocenteScreenState extends State<EvaluacionDocenteScreen> {
                   child: Text(
                     promedio.toStringAsFixed(1),
                     style: TextStyle(
-                        color: _colorPromedio(promedio),
-                        fontWeight: FontWeight.bold),
+                      color: _colorPromedio(promedio),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               if (esPreescolar && cantLogros > 0)
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.teal.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(20),
@@ -214,7 +262,9 @@ class _EvaluacionDocenteScreenState extends State<EvaluacionDocenteScreen> {
                   child: Text(
                     '$cantLogros ✓',
                     style: const TextStyle(
-                        color: Colors.teal, fontWeight: FontWeight.bold),
+                      color: Colors.teal,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               const SizedBox(width: 4),
@@ -256,10 +306,12 @@ class _EvaluacionEstudianteScreen extends StatelessWidget {
       builder: (context) => SimpleDialog(
         title: const Text('Descargar boletín'),
         children: periodosValidos
-            .map((p) => SimpleDialogOption(
-                  onPressed: () => Navigator.pop(context, p),
-                  child: Text('Periodo $p'),
-                ))
+            .map(
+              (p) => SimpleDialogOption(
+                onPressed: () => Navigator.pop(context, p),
+                child: Text('Periodo $p'),
+              ),
+            )
             .toList(),
       ),
     );
@@ -269,26 +321,28 @@ class _EvaluacionEstudianteScreen extends StatelessWidget {
     final id = int.tryParse(estudiante.id);
     if (id == null) return;
 
-    final uri = Uri.parse('${ApiConfig.baseUrl}/estudiantes/$id/boletin/').replace(
-      queryParameters: {'periodo': periodo},
-    );
+    final uri = Uri.parse('${ApiConfig.baseUrl}/estudiantes/$id/boletin/')
+        .replace(queryParameters: {'periodo': periodo});
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Generando boletín...'), duration: Duration(seconds: 2)),
+      const SnackBar(
+        content: Text('Generando boletín...'),
+        duration: Duration(seconds: 2),
+      ),
     );
 
     String? error;
 
     try {
-      final respuesta = await http.get(uri).timeout(const Duration(seconds: 45));
+      final respuesta = await http
+          .get(uri)
+          .timeout(const Duration(seconds: 45));
 
       if (respuesta.statusCode == 200) {
-        final blob = html.Blob([respuesta.bodyBytes], 'application/pdf');
-        final url = html.Url.createObjectUrlFromBlob(blob);
-        html.AnchorElement(href: url)
-          ..setAttribute('download', 'boletin_${estudiante.nombreCompleto.replaceAll(' ', '_')}_$periodo.pdf')
-          ..click();
-        html.Url.revokeObjectUrl(url);
+        await descargarBytes(
+          'boletin_${estudiante.nombreCompleto.replaceAll(' ', '_')}_$periodo.pdf',
+          respuesta.bodyBytes,
+        );
         return;
       }
 
@@ -302,12 +356,14 @@ class _EvaluacionEstudianteScreen extends StatelessWidget {
     }
 
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error!)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error!)));
     }
   }
 
   Future<void> _editarObservacion(BuildContext context, String periodo) async {
-    final actual = EvaluacionService().observacion(estudiante.id, periodo)?.texto ?? '';
+    final actual =
+        EvaluacionService().observacion(estudiante.id, periodo)?.texto ?? '';
     final ctrl = TextEditingController(text: actual);
     bool guardando = false;
 
@@ -319,10 +375,15 @@ class _EvaluacionEstudianteScreen extends StatelessWidget {
           content: TextField(
             controller: ctrl,
             maxLines: 4,
-            decoration: const InputDecoration(hintText: 'Comentario general del boletín para este periodo'),
+            decoration: const InputDecoration(
+              hintText: 'Comentario general del boletín para este periodo',
+            ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
             ElevatedButton(
               onPressed: guardando
                   ? null
@@ -330,17 +391,19 @@ class _EvaluacionEstudianteScreen extends StatelessWidget {
                       if (ctrl.text.trim().isEmpty) return;
                       setDialogState(() => guardando = true);
 
-                      final error = await EvaluacionService().guardarObservacion(
-                        estudianteId: estudiante.id,
-                        periodo: periodo,
-                        texto: ctrl.text.trim(),
-                      );
+                      final error = await EvaluacionService()
+                          .guardarObservacion(
+                            estudianteId: estudiante.id,
+                            periodo: periodo,
+                            texto: ctrl.text.trim(),
+                          );
 
                       if (!context.mounted) return;
 
                       if (error != null) {
                         setDialogState(() => guardando = false);
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+                        ScaffoldMessenger.of(context)
+                            .showSnackBar(SnackBar(content: Text(error)));
                         return;
                       }
 
@@ -373,8 +436,7 @@ class _EvaluacionEstudianteScreen extends StatelessWidget {
           Container(
             width: double.infinity,
             margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               color: preescolar
                   ? Colors.teal.withOpacity(0.08)
@@ -384,9 +446,7 @@ class _EvaluacionEstudianteScreen extends StatelessWidget {
             child: Row(
               children: [
                 Icon(
-                  preescolar
-                      ? Icons.emoji_events_rounded
-                      : Icons.grade_rounded,
+                  preescolar ? Icons.emoji_events_rounded : Icons.grade_rounded,
                   color: preescolar ? Colors.teal : AppColors.primary,
                   size: 20,
                 ),
@@ -410,10 +470,12 @@ class _EvaluacionEstudianteScreen extends StatelessWidget {
               child: Wrap(
                 spacing: 8,
                 children: periodosValidos
-                    .map((p) => OutlinedButton(
-                          onPressed: () => _editarObservacion(context, p),
-                          child: Text('Observación $p'),
-                        ))
+                    .map(
+                      (p) => OutlinedButton(
+                        onPressed: () => _editarObservacion(context, p),
+                        child: Text('Observación $p'),
+                      ),
+                    )
                     .toList(),
               ),
             ),
@@ -425,9 +487,10 @@ class _EvaluacionEstudianteScreen extends StatelessWidget {
                 if (registros.isEmpty) {
                   return const Center(
                     child: Text(
-                        'Aún no hay registros para este estudiante',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: AppColors.textSecondary)),
+                      'Aún no hay registros para este estudiante',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
                   );
                 }
                 return ListView.separated(
@@ -441,8 +504,7 @@ class _EvaluacionEstudianteScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
-                        border:
-                            Border.all(color: const Color(0xFFE7E7EC)),
+                        border: Border.all(color: const Color(0xFFE7E7EC)),
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -458,8 +520,9 @@ class _EvaluacionEstudianteScreen extends StatelessWidget {
                             child: Text(
                               r.score.toStringAsFixed(1),
                               style: TextStyle(
-                                  color: _colorPromedio(r.score),
-                                  fontWeight: FontWeight.bold),
+                                color: _colorPromedio(r.score),
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -470,28 +533,39 @@ class _EvaluacionEstudianteScreen extends StatelessWidget {
                                 Row(
                                   children: [
                                     Expanded(
-                                      child: Text(r.cursoTitulo,
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.w600)),
-                                    ),
-                                    Text('Periodo ${r.periodo}',
+                                      child: Text(
+                                        r.cursoTitulo,
                                         style: const TextStyle(
-                                            fontSize: 11.5,
-                                            color: AppColors.textSecondary)),
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                    Text(
+                                      'Periodo ${r.periodo}',
+                                      style: const TextStyle(
+                                        fontSize: 11.5,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
                                   ],
                                 ),
                                 if (r.logro.trim().isNotEmpty) ...[
                                   const SizedBox(height: 6),
-                                  Text(r.logro,
-                                      style: const TextStyle(fontSize: 13.5)),
+                                  Text(
+                                    r.logro,
+                                    style: const TextStyle(fontSize: 13.5),
+                                  ),
                                 ],
                               ],
                             ),
                           ),
                           if (_esDocente)
                             IconButton(
-                              icon: const Icon(Icons.delete_outline_rounded,
-                                  size: 20, color: AppColors.danger),
+                              icon: const Icon(
+                                Icons.delete_outline_rounded,
+                                size: 20,
+                                color: AppColors.danger,
+                              ),
                               onPressed: () =>
                                   EvaluacionService().eliminar(r.id),
                             ),
@@ -568,10 +642,14 @@ class _FormularioRegistroState extends State<_FormularioRegistro> {
       final uri = Uri.parse('${ApiConfig.baseUrl}/cursos/').replace(
         queryParameters: {'instructor_id': sesion.usuarioId.toString()},
       );
-      final respuesta = await http.get(uri).timeout(const Duration(seconds: 45));
+      final respuesta = await http
+          .get(uri)
+          .timeout(const Duration(seconds: 45));
       if (respuesta.statusCode == 200) {
         final datos = jsonDecode(utf8.decode(respuesta.bodyBytes)) as List;
-        _cursos = datos.map((c) => _Curso(id: c['id'] as int, title: c['title'] as String)).toList();
+        _cursos = datos
+            .map((c) => _Curso(id: c['id'] as int, title: c['title'] as String))
+            .toList();
         _cursoId = _cursos.isNotEmpty ? _cursos.first.id : null;
       }
     } catch (_) {}
@@ -593,7 +671,9 @@ class _FormularioRegistroState extends State<_FormularioRegistro> {
     final nota = double.tryParse(_notaC.text.replaceAll(',', '.'));
     if (nota == null || nota < 0 || nota > 5) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ingresa una nota válida entre 0.0 y 5.0')),
+        const SnackBar(
+          content: Text('Ingresa una nota válida entre 0.0 y 5.0'),
+        ),
       );
       return;
     }
@@ -615,7 +695,8 @@ class _FormularioRegistroState extends State<_FormularioRegistro> {
 
     if (error != null) {
       setState(() => _guardando = false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error)));
       return;
     }
 
@@ -625,8 +706,9 @@ class _FormularioRegistroState extends State<_FormularioRegistro> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding:
-          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -646,19 +728,24 @@ class _FormularioRegistroState extends State<_FormularioRegistro> {
                     height: 4,
                     margin: const EdgeInsets.only(bottom: 14),
                     decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(4)),
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                   ),
                 ),
                 Text(
                   'Registro · ${widget.estudiante.nombres}',
                   style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 16),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
                 const SizedBox(height: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 5),
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
                     color: _soloLogros
                         ? Colors.teal.withOpacity(0.1)
@@ -670,60 +757,96 @@ class _FormularioRegistroState extends State<_FormularioRegistro> {
                         ? '🌱 Preescolar — Notas numéricas'
                         : '📚 Primaria — Notas numéricas',
                     style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: _soloLogros ? Colors.teal : AppColors.primary),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: _soloLogros ? Colors.teal : AppColors.primary,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
                 if (_cargandoCursos)
                   const Center(
-                      child: Padding(
-                    padding: EdgeInsets.all(20),
-                    child: CircularProgressIndicator(),
-                  ))
+                    child: Padding(
+                      padding: EdgeInsets.all(20),
+                      child: CircularProgressIndicator(),
+                    ),
+                  )
                 else if (_cursos.isEmpty)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 20),
-                    child: Text('No tienes cursos asignados todavía.',
-                        style: TextStyle(color: AppColors.textSecondary)),
+                    child: Text(
+                      'No tienes cursos asignados todavía.',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
                   )
                 else ...[
-                  const Text('CURSO',
-                      style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textSecondary,
-                          letterSpacing: 0.6)),
+                  const Text(
+                    'CURSO',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 0.6,
+                    ),
+                  ),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<int>(
                     initialValue: _cursoId,
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: const Color(0xFFF3F4F7),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 4,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide.none,
+                      ),
                     ),
-                    items: _cursos.map((c) => DropdownMenuItem(value: c.id, child: Text(c.title))).toList(),
+                    items: _cursos
+                        .map(
+                          (c) => DropdownMenuItem(
+                            value: c.id,
+                            child: Text(c.title),
+                          ),
+                        )
+                        .toList(),
                     onChanged: (v) => setState(() => _cursoId = v ?? _cursoId),
                   ),
                   const SizedBox(height: 12),
-                  const Text('PERIODO',
-                      style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textSecondary,
-                          letterSpacing: 0.6)),
+                  const Text(
+                    'PERIODO',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 0.6,
+                    ),
+                  ),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<String>(
                     initialValue: _periodo,
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: const Color(0xFFF3F4F7),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 4,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide.none,
+                      ),
                     ),
-                    items: periodosValidos.map((p) => DropdownMenuItem(value: p, child: Text('Periodo $p'))).toList(),
+                    items: periodosValidos
+                        .map(
+                          (p) => DropdownMenuItem(
+                            value: p,
+                            child: Text('Periodo $p'),
+                          ),
+                        )
+                        .toList(),
                     onChanged: (v) => setState(() => _periodo = v ?? _periodo),
                   ),
                   const SizedBox(height: 12),
@@ -733,16 +856,22 @@ class _FormularioRegistroState extends State<_FormularioRegistro> {
                     hint: 'Ej. 4.5',
                     icon: Icons.grade_rounded,
                     keyboardType: TextInputType.number,
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Ingresa la nota' : null,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Ingresa la nota'
+                        : null,
                   ),
                   const SizedBox(height: 12),
                   LabeledTextField(
                     controller: _logroC,
                     label: _soloLogros ? 'Logro' : 'Observación (opcional)',
-                    hint: _soloLogros ? 'Describe el logro del estudiante' : 'Comentario sobre el desempeño',
+                    hint: _soloLogros
+                        ? 'Describe el logro del estudiante'
+                        : 'Comentario sobre el desempeño',
                     icon: Icons.emoji_events_rounded,
                     validator: _soloLogros
-                        ? (v) => (v == null || v.trim().isEmpty) ? 'Describe el logro' : null
+                        ? (v) => (v == null || v.trim().isEmpty)
+                              ? 'Describe el logro'
+                              : null
                         : null,
                   ),
                   const SizedBox(height: 20),
@@ -754,13 +883,18 @@ class _FormularioRegistroState extends State<_FormularioRegistro> {
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                       child: _guardando
                           ? const SizedBox(
                               width: 20,
                               height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
                             )
                           : const Text('Guardar'),
                     ),

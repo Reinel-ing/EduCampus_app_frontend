@@ -1,26 +1,7 @@
-import 'dart:js_interop';
-
-@JS('eduCampusPuedeInstalar')
-external bool _puedeInstalar();
-
-@JS('eduCampusInstalarApp')
-external JSPromise<JSString> _instalarApp();
+import '../utils/plataforma.dart';
 
 class InstalacionService {
-  bool get instalacionDisponible {
-    try {
-      return _puedeInstalar();
-    } catch (_) {
-      return false;
-    }
-  }
+  bool get instalacionDisponible => instalacionPwaDisponible();
 
-  Future<String> instalar() async {
-    try {
-      final resultado = await _instalarApp().toDart;
-      return resultado.toDart;
-    } catch (_) {
-      return 'unavailable';
-    }
-  }
+  Future<String> instalar() => instalarPwa();
 }

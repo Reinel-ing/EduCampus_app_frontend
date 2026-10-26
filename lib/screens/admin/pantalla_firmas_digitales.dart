@@ -1,6 +1,4 @@
-// ignore_for_file: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
-import 'dart:typed_data';
+import '../../utils/plataforma.dart';
 
 import 'package:flutter/material.dart';
 
@@ -55,44 +53,30 @@ class _FirmasDigitalesScreenState extends State<FirmasDigitalesScreen> {
     }
   }
 
-  void _elegirImagen({required bool esAdmin, required int id}) {
-    final input = html.FileUploadInputElement()
-      ..accept = 'image/*'
-      ..click();
+  Future<void> _elegirImagen({required bool esAdmin, required int id}) async {
+    final archivo = await seleccionarArchivo(soloImagenes: true);
+    if (archivo == null || !mounted) return;
 
-    input.onChange.listen((_) {
-      final file = input.files?.first;
-      if (file == null) return;
+    setState(() => _subiendoId = id);
 
-      final reader = html.FileReader();
-      reader.readAsArrayBuffer(file);
-      reader.onLoadEnd.listen((_) async {
-        final result = reader.result;
-        if (result is! List<int>) return;
+    final error = esAdmin
+        ? await FirmasService().subirFirmaAdmin(id, archivo.bytes)
+        : await FirmasService().subirFirmaDocente(id, archivo.bytes);
 
-        final bytes = Uint8List.fromList(result);
+    if (!mounted) return;
 
-        setState(() => _subiendoId = id);
+    setState(() => _subiendoId = null);
 
-        final error = esAdmin
-            ? await FirmasService().subirFirmaAdmin(id, bytes)
-            : await FirmasService().subirFirmaDocente(id, bytes);
+    if (error != null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error)));
+      return;
+    }
 
-        if (!mounted) return;
-
-        setState(() => _subiendoId = null);
-
-        if (error != null) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
-          return;
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Firma guardada correctamente')),
-        );
-        _cargar();
-      });
-    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Firma guardada correctamente')),
+    );
+    _cargar();
   }
 
   Widget _tarjetaFirma({
@@ -118,7 +102,8 @@ class _FirmasDigitalesScreenState extends State<FirmasDigitalesScreen> {
             height: 42,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: (tieneFirma ? AppColors.success : AppColors.danger).withValues(alpha: 0.1),
+              color: (tieneFirma ? AppColors.success : AppColors.danger)
+                  .withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
@@ -131,8 +116,17 @@ class _FirmasDigitalesScreenState extends State<FirmasDigitalesScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(nombre, style: const TextStyle(fontWeight: FontWeight.w600)),
-                Text(etiqueta, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                Text(
+                  nombre,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                Text(
+                  etiqueta,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
                 const SizedBox(height: 4),
                 Text(
                   tieneFirma ? 'Con firma registrada' : 'Sin firma registrada',
@@ -146,9 +140,15 @@ class _FirmasDigitalesScreenState extends State<FirmasDigitalesScreen> {
             ),
           ),
           OutlinedButton.icon(
-            onPressed: subiendo ? null : () => _elegirImagen(esAdmin: esAdmin, id: id),
+            onPressed: subiendo
+                ? null
+                : () => _elegirImagen(esAdmin: esAdmin, id: id),
             icon: subiendo
-                ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                ? const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
                 : const Icon(Icons.upload_rounded, size: 16),
             label: Text(tieneFirma ? 'Cambiar' : 'Subir'),
           ),
@@ -188,7 +188,13 @@ class _FirmasDigitalesScreenState extends State<FirmasDigitalesScreen> {
             style: TextStyle(fontSize: 12.5, color: AppColors.textPrimary),
           ),
         ),
-        const Text('Administrador', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+        const Text(
+          'Administrador',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
         const SizedBox(height: 10),
         if (listado.admin != null)
           _tarjetaFirma(
@@ -199,23 +205,37 @@ class _FirmasDigitalesScreenState extends State<FirmasDigitalesScreen> {
             id: listado.admin!.id,
           )
         else
-          const Text('No se encontró una cuenta de administrador.', style: TextStyle(color: AppColors.textSecondary)),
+          const Text(
+            'No se encontró una cuenta de administrador.',
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
         const SizedBox(height: 20),
-        const Text('Docentes', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+        const Text(
+          'Docentes',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
         const SizedBox(height: 10),
         if (listado.docentes.isEmpty)
-          const Text('Aún no hay docentes registrados.', style: TextStyle(color: AppColors.textSecondary))
+          const Text(
+            'Aún no hay docentes registrados.',
+            style: TextStyle(color: AppColors.textSecondary),
+          )
         else
-          ...listado.docentes.map((d) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _tarjetaFirma(
-                  nombre: d.nombre,
-                  etiqueta: 'Firma en los boletines de sus estudiantes',
-                  tieneFirma: d.tieneFirma,
-                  esAdmin: false,
-                  id: d.id,
-                ),
-              )),
+          ...listado.docentes.map(
+            (d) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _tarjetaFirma(
+                nombre: d.nombre,
+                etiqueta: 'Firma en los boletines de sus estudiantes',
+                tieneFirma: d.tieneFirma,
+                esAdmin: false,
+                id: d.id,
+              ),
+            ),
+          ),
       ],
     );
   }

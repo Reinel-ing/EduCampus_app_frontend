@@ -1,6 +1,6 @@
-// ignore_for_file: avoid_web_libraries_in_flutter
 import 'dart:convert';
-import 'dart:html' as html;
+
+import '../../utils/plataforma.dart';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -18,12 +18,13 @@ String _telefonoWhatsapp(String telefono) {
   return digitos;
 }
 
-void _abrirChatsWhatsapp(List<AvisoWhatsapp> avisos) {
+Future<void> _abrirChatsWhatsapp(List<AvisoWhatsapp> avisos) async {
   for (final aviso in avisos) {
     final telefono = _telefonoWhatsapp(aviso.telefono);
     if (telefono.isEmpty) continue;
-    final url = 'https://wa.me/$telefono?text=${Uri.encodeComponent(aviso.mensaje)}';
-    html.window.open(url, '_blank');
+    final url =
+        'https://wa.me/$telefono?text=${Uri.encodeComponent(aviso.mensaje)}';
+    await abrirUrlExterna(url);
   }
 }
 
@@ -67,13 +68,20 @@ class _FinalizarClaseScreenState extends State<FinalizarClaseScreen> {
       final uri = Uri.parse('${ApiConfig.baseUrl}/cursos/').replace(
         queryParameters: {'instructor_id': sesion.usuarioId.toString()},
       );
-      final respuesta = await http.get(uri).timeout(const Duration(seconds: 10));
+      final respuesta = await http
+          .get(uri)
+          .timeout(const Duration(seconds: 10));
 
       if (respuesta.statusCode == 200) {
         final datos = jsonDecode(utf8.decode(respuesta.bodyBytes)) as List;
         setState(() {
           _cursos = datos
-              .map((c) => _CursoDocente(id: c['id'] as int, title: c['title'] as String))
+              .map(
+                (c) => _CursoDocente(
+                  id: c['id'] as int,
+                  title: c['title'] as String,
+                ),
+              )
               .toList();
           _cursoSeleccionado = _cursos.isNotEmpty ? _cursos.first.id : null;
           _cargandoCursos = false;
@@ -96,7 +104,9 @@ class _FinalizarClaseScreenState extends State<FinalizarClaseScreen> {
     });
 
     try {
-      final resultado = await NotificacionesBackendService().avisarRecogida(_cursoSeleccionado!);
+      final resultado = await NotificacionesBackendService().avisarRecogida(
+        _cursoSeleccionado!,
+      );
 
       if (!mounted) return;
 
@@ -110,7 +120,7 @@ class _FinalizarClaseScreenState extends State<FinalizarClaseScreen> {
         _enviando = false;
         _mensajeExito = resultado.acudientesNotificados > 0
             ? 'Aviso enviado a ${resultado.acudientesNotificados} acudiente(s)'
-                '${resultado.whatsapp.isNotEmpty ? '. Se abrió un chat de WhatsApp por cada uno: solo falta darle "Enviar" en cada pestaña.' : '.'}'
+                  '${resultado.whatsapp.isNotEmpty ? '. Se abrió un chat de WhatsApp por cada uno: solo falta darle "Enviar" en cada pestaña.' : '.'}'
             : 'No hay acudientes registrados para notificar en este curso.';
       });
     } on AuthException catch (error) {
@@ -150,13 +160,21 @@ class _FinalizarClaseScreenState extends State<FinalizarClaseScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Ya pueden recoger a los estudiantes',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+                      Text(
+                        'Ya pueden recoger a los estudiantes',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 17,
+                        ),
+                      ),
                       SizedBox(height: 4),
                       Text(
                         'Elige el curso que acaba de terminar. Se avisa al instante '
                         'solo a los acudientes de los estudiantes de ese curso.',
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 13,
+                        ),
                       ),
                     ],
                   ),
@@ -167,10 +185,12 @@ class _FinalizarClaseScreenState extends State<FinalizarClaseScreen> {
           const SizedBox(height: 24),
 
           if (_cargandoCursos)
-            const Center(child: Padding(
-              padding: EdgeInsets.all(24),
-              child: CircularProgressIndicator(),
-            ))
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: CircularProgressIndicator(),
+              ),
+            )
           else if (_cursos.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 24),
@@ -182,18 +202,29 @@ class _FinalizarClaseScreenState extends State<FinalizarClaseScreen> {
           else ...[
             const Text(
               'CURSO',
-              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 0.6),
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textSecondary,
+                letterSpacing: 0.6,
+              ),
             ),
             const SizedBox(height: 6),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(color: const Color(0xFFF3F4F7), borderRadius: BorderRadius.circular(10)),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF3F4F7),
+                borderRadius: BorderRadius.circular(10),
+              ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<int>(
                   value: _cursoSeleccionado,
                   isExpanded: true,
                   items: _cursos
-                      .map((c) => DropdownMenuItem(value: c.id, child: Text(c.title)))
+                      .map(
+                        (c) =>
+                            DropdownMenuItem(value: c.id, child: Text(c.title)),
+                      )
                       .toList(),
                   onChanged: (v) => setState(() => _cursoSeleccionado = v),
                 ),
@@ -204,14 +235,22 @@ class _FinalizarClaseScreenState extends State<FinalizarClaseScreen> {
               const SizedBox(height: 16),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFDECEA),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: const Color(0xFFF5C2C0)),
                 ),
-                child: Text(_errorMensaje!,
-                    style: const TextStyle(color: Color(0xFFC0392B), fontWeight: FontWeight.w600)),
+                child: Text(
+                  _errorMensaje!,
+                  style: const TextStyle(
+                    color: Color(0xFFC0392B),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ],
 
@@ -219,14 +258,22 @@ class _FinalizarClaseScreenState extends State<FinalizarClaseScreen> {
               const SizedBox(height: 16),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFE8F5E9),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: const Color(0xFFA5D6A7)),
                 ),
-                child: Text(_mensajeExito!,
-                    style: const TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.w600)),
+                child: Text(
+                  _mensajeExito!,
+                  style: const TextStyle(
+                    color: Color(0xFF2E7D32),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ],
 
@@ -240,14 +287,21 @@ class _FinalizarClaseScreenState extends State<FinalizarClaseScreen> {
                     ? const SizedBox(
                         width: 18,
                         height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
                     : const Icon(Icons.campaign_rounded),
-                label: Text(_enviando ? 'Enviando...' : 'Avisar a los acudientes'),
+                label: Text(
+                  _enviando ? 'Enviando...' : 'Avisar a los acudientes',
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ),
